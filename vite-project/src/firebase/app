@@ -2,17 +2,18 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDppug1IvtGim0cu-3nV6L4aKb-JxpNHlI",
-  authDomain: "personal-website-5f602.firebaseapp.com",
-  projectId: "personal-website-5f602",
-  storageBucket: "personal-website-5f602.firebasestorage.app",
-  messagingSenderId: "348918549058",
-  appId: "1:348918549058:web:fb10582d38831cc908fbdb",
-  measurementId: "G-7D1BTWYZ08"
+  apiKey: "AIzaSyAXd9LOJ-fN1Yelxk84LzOaWllGVL2p6Ko",
+  authDomain: "depression-detector-d83bb.firebaseapp.com",
+  projectId: "depression-detector-d83bb",
+  storageBucket: "depression-detector-d83bb.appspot.com",
+  messagingSenderId: "526814075286",
+  appId: "1:526814075286:web:73d8ed3799cf29c94325b7",
+  measurementId: "G-RXEL55YG83"
 };
 
 // Initialize Firebase
@@ -27,3 +28,4 @@ try {
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const storage = getStorage(app);

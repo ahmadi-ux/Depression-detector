@@ -1,0 +1,50 @@
+import { useState } from "react";
+import ContactForm from "../ContactForm";
+import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+
+const buttonDetails = "rounded-xl shadow-md hover:scale-105 hover:bg-white transition-transform";
+
+/** Data Upload Section with dialog form for uploading files
+ * - Dialog with a contact form when button is clicked
+*/
+export default function DataUpload() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="h-auto flex flex-col items-center justify-center bg-blue-100 p-4 px-8 py-16">
+      <h2 className="text-5xl font-bold mb-4">Data Upload</h2>
+      <h3 className="text-2xl mb-1 max-w-xl text-center">
+        Uploaded files must be smaller than 1MB(or something 900KB also doenst work.).
+      </h3>
+      {/*<div className="w-full max-w-xl flex flex-col">*/}
+
+      <p className="text-lg max-w-xl text-center">
+      </p>
+      <div className="flex justify-center mt-4">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="lg" className={buttonDetails}>Upload Files</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>File Upload</DialogTitle>
+
+              <DialogDescription>
+                Upload a PDF or document to interface with the LLMs.
+              </DialogDescription>
+            </DialogHeader>
+            <ContactForm onSuccess={() => setOpen(false)} />
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}

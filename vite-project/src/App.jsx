@@ -6,7 +6,7 @@ import Skills from './components/sections/Skills'
 import Projects from './components/sections/Projects'
 import ProjectDetails from './components/projectFolder/ProjectDetails'
 import Aboutme from './components/sections/Aboutme'
-import Contactme from './components/sections/Contactme'
+import DataUpload from './components/sections/DataUpload'
 import AdminLogin from './components/sections/AdminLogin'
 import AdminDashboard from './components/sections/AdminDashboard'
 import DataInput from './components/sections/Input'
@@ -28,8 +28,8 @@ function App() {
             <div id="home">
               <Home />
             </div>
-            <div id="DataInput">
-              <DataInput />
+            <div id="DataUpload">
+              <DataUpload />
             </div>
             <div id="DataOutput">
               <DataOutput />
@@ -47,9 +47,6 @@ function App() {
             {/* <div id="aboutme">
               <Aboutme />
             </div> */}
-            <div id="contactme">
-              <Contactme />
-            </div>
           </>
         } />
         <Route path="/projects/:id" element={<ProjectDetails />} />
