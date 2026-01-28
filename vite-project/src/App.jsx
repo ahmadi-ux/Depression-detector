@@ -9,6 +9,8 @@ import Aboutme from './components/sections/Aboutme'
 import Contactme from './components/sections/Contactme'
 import AdminLogin from './components/sections/AdminLogin'
 import AdminDashboard from './components/sections/AdminDashboard'
+import DataInput from './components/sections/Input'
+import DataOutput from './components/sections/Output'
 
 /** Main Application Component
  * - Sets up routing for different sections and pages
@@ -26,18 +28,25 @@ function App() {
             <div id="home">
               <Home />
             </div>
-            <div id="experience">
+            <div id="DataInput">
+              <DataInput />
+            </div>
+            <div id="DataOutput">
+              <DataOutput />
+            </div>
+
+            {/* <div id="experience">
               <Experience />
-            </div>
-            <div id="skills">
+            </div> */}
+            {/* <div id="skills">
               <Skills />
-            </div>
-            <div id="projects">
+            </div> */}
+            {/* <div id="projects">
               <Projects />
-            </div>
-            <div id="aboutme">
+            </div> */}
+            {/* <div id="aboutme">
               <Aboutme />
-            </div>
+            </div> */}
             <div id="contactme">
               <Contactme />
             </div>

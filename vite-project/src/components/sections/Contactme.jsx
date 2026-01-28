@@ -54,20 +54,17 @@ export default function Contactme() {
         Get in touch! Fill out the form below and I'll get back to you soon.
       </p>
       <div className="flex justify-center mt-4">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="lg" className={buttonDetails}>Send Me a Message</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Contact Me</DialogTitle>
-              <DialogDescription>
-                Fill out the form below and I'll get back to you as soon as possible.
-              </DialogDescription>
-            </DialogHeader>
-            <ContactForm onSuccess={() => setOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted">
+  <span className="text-sm text-muted-foreground">
+    Click to upload or drag & drop
+  </span>
+  <input
+    type="file"
+    className="hidden"
+    onChange={(e) => setFile(e.target.files[0])}
+  />
+</label>
+
       </div>
     </div>
   );
