@@ -3,15 +3,22 @@ from flask_cors import CORS
 from datetime import datetime
 import os
 import io
+import threading
+from uuid import uuid4
 from PyPDF2 import PdfReader
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
+from werkzeug.datastructures import FileStorage
 from interface import analyze_text
+from uuid import UUID
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Job storage (in production, use Redis or database)
+jobs = {}
 
 # ============================================================================
 # FILE EXTRACTION UTILITIES
@@ -193,7 +200,7 @@ def generate_pdf_report(filename, extracted_text, llama_output):
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     """
-    Main endpoint: receives file → processes with Llama → returns PDF report
+    Return job ID immediately, process file in background
     """
     try:
         print("=== UPLOAD REQUEST RECEIVED ===")
@@ -206,56 +213,149 @@ def upload_file():
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
         
-        filename = file.filename
-        print(f"Processing file: {filename} ({file.content_type})")
+        # Generate unique job ID
+        job_id = str(uuid4())
+        print(f"Created job: {job_id}")
         
-        # Step 1: Extract text from file
-        print("Step 1: Extracting text...")
-        try:
-            extracted_text = extract_text_from_file(file)
-            print(f"✓ Extracted {len(extracted_text)} characters")
-            if not extracted_text or len(extracted_text.strip()) == 0:
-                print("⚠ WARNING: Extracted text is empty!")
-                return jsonify({'error': 'No text could be extracted from file'}), 400
-        except Exception as e:
-            print(f"✗ Text extraction failed: {str(e)}")
-            raise
+        # Initialize job
+        jobs[job_id] = {
+            'status': 'processing',
+            'progress': 0,
+            'filename': file.filename,
+            'created_at': datetime.now().isoformat()
+        }
         
-        # Step 2: Process with Llama
-        print("Step 2: Processing with Llama...")
-        try:
-            llama_output = process_with_llama(extracted_text)
-            print(f"✓ Llama processing complete")
-            print(f"  - Label: {llama_output.get('label')}")
-            print(f"  - Confidence: {llama_output.get('confidence')}")
-            print(f"  - Signals: {llama_output.get('signals')}")
-        except Exception as e:
-            print(f"✗ Llama processing failed: {str(e)}")
-            raise
+        # Read file content (must do this in main thread before passing to worker)
+        file_content = file.read()
+        file.seek(0)  # Reset for extraction
         
-        # Step 3: Generate PDF report
-        print("Step 3: Generating PDF report...")
-        try:
-            pdf_report = generate_pdf_report(filename, extracted_text, llama_output)
-            print(f"✓ PDF report generated")
-        except Exception as e:
-            print(f"✗ PDF generation failed: {str(e)}")
-            raise
-        
-        # Return PDF for download
-        print("Step 4: Returning PDF report...")
-        return send_file(
-            pdf_report,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=f'report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        # Start background processing
+        thread = threading.Thread(
+            target=process_file_async,
+            args=(job_id, file_content, file.filename),
+            daemon=True
         )
+        thread.start()
+        
+        return jsonify({
+            'job_id': job_id,
+            'status': 'processing',
+            'message': 'File processing started'
+        }), 202  # 202 Accepted
         
     except Exception as e:
-        print(f"\n✗ ERROR: {str(e)}")
+        print(f"ERROR in upload: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/job/<job_id>', methods=['GET'])
+def get_job_status(job_id):
+    """
+    Check job status and get result when ready
+    """
+    if job_id not in jobs:
+        return jsonify({'error': 'Job not found'}), 404
+    
+    job = jobs[job_id]
+    
+    # If complete, return PDF file
+    if job['status'] == 'complete':
+        pdf_data = job.get('pdf')
+        if pdf_data:
+            return send_file(
+                io.BytesIO(pdf_data),
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f"report_{job_id[:8]}.pdf"
+            )
+    
+    # If error, return error
+    if job['status'] == 'error':
+        return jsonify({
+            'status': 'error',
+            'error': job.get('error', 'Unknown error'),
+            'job_id': job_id
+        }), 400
+    
+    # If processing, return status
+    return jsonify({
+        'job_id': job_id,
+        'status': job['status'],
+        'progress': job.get('progress', 0),
+        'filename': job.get('filename'),
+        'created_at': job.get('created_at')
+    }), 200
+
+from werkzeug.datastructures import FileStorage
+import io
+
+def process_file_async(job_id, file_bytes, filename):
+    """
+    Background worker: Extract → Analyze → Generate PDF
+    """
+    try:
+        print(f"\n[{job_id}] Starting async processing...")
+
+        # 🔥 Rebuild FileStorage from raw bytes (thread-safe)
+        file = FileStorage(
+            stream=io.BytesIO(file_bytes),
+            filename=filename
+        )
+
+        # Step 1: Extract text
+        print(f"[{job_id}] Step 1: Extracting text...")
+        jobs[job_id]['progress'] = 10
+
+        extracted_text = extract_text_from_file(file)
+
+        if not extracted_text or not extracted_text.strip():
+            raise Exception("No text could be extracted from file")
+
+        print(f"[{job_id}] ✓ Extracted {len(extracted_text)} characters")
+        jobs[job_id]['progress'] = 30
+
+        # Step 2: Process with Llama
+        print(f"[{job_id}] Step 2: Processing with Llama...")
+        jobs[job_id]['progress'] = 40
+
+        llama_output = process_with_llama(extracted_text)
+
+        print(f"[{job_id}] ✓ Llama analysis complete")
+        print(f"[{job_id}]   - Label: {llama_output.get('label')}")
+        print(f"[{job_id}]   - Confidence: {llama_output.get('confidence')}")
+        jobs[job_id]['progress'] = 70
+
+        # Step 3: Generate PDF
+        print(f"[{job_id}] Step 3: Generating PDF...")
+        pdf_report = generate_pdf_report(filename, extracted_text, llama_output)
+        pdf_data = pdf_report.getvalue()
+
+        print(f"[{job_id}] ✓ PDF generated ({len(pdf_data)} bytes)")
+        jobs[job_id]['progress'] = 90
+
+        # Step 4: Mark complete
+        jobs[job_id] = {
+            'status': 'complete',
+            'progress': 100,
+            'filename': filename,
+            'pdf': pdf_data,
+            'created_at': jobs[job_id]['created_at'],
+            'completed_at': datetime.now().isoformat()
+        }
+
+        print(f"[{job_id}] ✓ Job complete!")
+
+    except Exception as e:
+        print(f"[{job_id}] ✗ ERROR: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+
+        jobs[job_id] = {
+            'status': 'error',
+            'error': str(e),
+            'filename': filename,
+            'created_at': jobs[job_id].get('created_at'),
+            'failed_at': datetime.now().isoformat()
+        }
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

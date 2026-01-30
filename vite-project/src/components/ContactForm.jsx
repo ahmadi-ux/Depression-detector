@@ -37,34 +37,93 @@ export default function ContactForm({ onSuccess }) {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Send to backend for processing
-      const response = await fetch('http://localhost:5000/api/upload', {
+      // Send to backend - returns immediately with job ID
+      console.log("Submitting file...");
+      const uploadResponse = await fetch('http://localhost:5000/api/upload', {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Processing failed: ${response.statusText}`);
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || `Upload failed: ${uploadResponse.statusText}`);
       }
 
-      // Download the PDF report
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `report_${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const uploadData = await uploadResponse.json();
+      const jobId = uploadData.job_id;
+      console.log(`✓ Job started: ${jobId}`);
+      
+      // alert(`Processing started... Please wait.\nJob ID: ${jobId}`);
+
+      // Poll for job completion
+      let isComplete = false;
+      let pollCount = 0;
+      const maxPolls = 600; // 10 minutes max
+
+      while (!isComplete && pollCount < maxPolls) {
+        // Wait 1 second before polling
+        await new Promise(r => setTimeout(r, 1000));
+        pollCount++;
+        console.log(`Polling attempt ${pollCount}`);
+
+        try {
+          console.log(`[Poll ${pollCount}] Checking status for job ${jobId.substring(0, 8)}...`);
+          const statusResponse = await fetch(`http://localhost:5000/api/job/${jobId}`);
+          
+          if (!statusResponse.ok) {
+            const errorData = await statusResponse.json();
+
+            // Job failed permanently – stop polling
+            if (statusResponse.status === 400 && errorData.status === "error") {
+              throw new Error(`Processing failed: ${errorData.error}`);
+            }
+
+            // Temporary error – keep polling
+            throw new Error("Temporary polling error");
+          }
+
+
+          // Success response - could be PDF or JSON status
+          const contentType = statusResponse.headers.get('content-type');
+          
+          if (contentType && contentType.includes('application/pdf')) {
+            // PDF is ready!
+            console.log("✓ PDF ready! Downloading...");
+            const blob = await statusResponse.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report_${jobId.substring(0, 8)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            isComplete = true;
+            console.log("✓ Download complete!");
+          } else {
+            // Still processing - parse JSON status
+            const statusData = await statusResponse.json();
+            console.log(`Status: ${statusData.status} | Progress: ${statusData.progress}%`);
+          }
+        } catch (pollError) {
+          console.error(`Poll error: ${pollError.message}`);
+            if (pollError.message.startsWith("Processing failed")) {
+            throw pollError; // stop everything
+          }
+        }
+      }
+
+      if (!isComplete) {
+        throw new Error('Processing timeout - took longer than 10 minutes');
+      }
 
       form.reset({ file: null });
-      alert("Report generated and downloaded successfully!");
+      alert("✓ Report generated and downloaded successfully!");
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Error:", error);
-      alert(`Error: ${error.message}`);
+      alert(`❌ Error: ${error.message}`);
     }
   };
 
