@@ -21,9 +21,6 @@ export default function DataUpload() {
   return (
     <div className="h-auto flex flex-col items-center justify-center bg-blue-100 p-4 px-8 py-16">
       <h2 className="text-5xl font-bold mb-4">Data Upload</h2>
-      <h3 className="text-2xl mb-1 max-w-xl text-center">
-        Uploaded files must be smaller than 1MB(or something 900KB also doenst work.).
-      </h3>
       {/*<div className="w-full max-w-xl flex flex-col">*/}
 
       <p className="text-lg max-w-xl text-center">

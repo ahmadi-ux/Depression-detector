@@ -31,9 +31,11 @@ function App() {
             <div id="DataUpload">
               <DataUpload />
             </div>
+            {/*
             <div id="DataOutput">
               <DataOutput />
             </div>
+            */}
 
             {/* <div id="experience">
               <Experience />

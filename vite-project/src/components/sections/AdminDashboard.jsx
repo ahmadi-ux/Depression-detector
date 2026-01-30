@@ -1,34 +1,51 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
 import { collection, getDocs, query, orderBy, deleteDoc, doc } from "firebase/firestore";
-import { signOut, onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "../../firebase/app";
+import { db } from "../../firebase/app";
 import { Button } from "../ui/button";
-import { LogOut, Mail, User, Calendar, Trash2, Loader2 } from "lucide-react";
+import { Mail, FileText, Calendar, Trash2, Loader2, Eye, EyeOff } from "lucide-react";
+
+// CSV Preview Component
+function CSVPreview({ fileURL }) {
+    const [content, setContent] = useState("");
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchCSV = async () => {
+            try {
+                const response = await fetch(fileURL);
+                const text = await response.text();
+                const lines = text.split('\n').slice(0, 50).join('\n');
+                setContent(lines);
+            } catch (err) {
+                setError("Failed to load CSV preview");
+            }
+        };
+        fetchCSV();
+    }, [fileURL]);
+
+    return (
+        <div>
+            {error ? (
+                <p className="text-red-600">{error}</p>
+            ) : (
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words bg-gray-50 p-3 rounded text-xs">
+                    {content}
+                </pre>
+            )}
+        </div>
+    );
+}
 
 export default function AdminDashboard() {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
     const [deleting, setDeleting] = useState(null);
-    const navigate = useNavigate();
+    const [expandedFile, setExpandedFile] = useState(null);
 
-    /** Handles authentication state
-     * - If user is logged in, fetch submissions
-     * - If not logged in, redirect to login page
-    */
+    // Fetch submissions on component mount
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                fetchSubmissions();
-            } else {
-                navigate("/admin/login");
-            }
-        });
-
-        return () => unsubscribe();
-    }, [navigate]);
+        fetchSubmissions();
+    }, []);
 
     /** Fetches contact form submissions from Firestore 
      * - Orders by timestamp descending
@@ -48,20 +65,6 @@ export default function AdminDashboard() {
             alert("Failed to load submissions");
         } finally {
             setLoading(false);
-        }
-    };
-
-    /** Handles logouts
-     * - Signs out the user from Firebase Auth
-     * - Redirects to login page
-     */
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            navigate("/admin/login");
-        } catch (error) {
-            console.error("Logout error:", error);
-            alert("Failed to logout");
         }
     };
 
@@ -116,15 +119,11 @@ export default function AdminDashboard() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+                            <h1 className="text-2xl font-bold">File Submissions</h1>
                             <p className="text-sm text-gray-600 mt-1">
-                                Logged in as: {user?.email}
+                                View all uploaded files and data
                             </p>
                         </div>
-                        <Button onClick={handleLogout} variant="outline" className="gap-2 rounded-xl shadow-md hover:scale-105 transition-transform">
-                            <LogOut className="h-4 w-4" />
-                            Logout
-                        </Button>
                     </div>
                 </div>
             </header>
@@ -159,47 +158,135 @@ export default function AdminDashboard() {
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <User className="h-4 w-4 text-gray-500" />
+                                            <FileText className="h-4 w-4 text-gray-500" />
                                             <span className="font-semibold text-lg">
-                                                {submission.name}
+                                                {submission.fileName || "Unnamed File"}
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                                             <Mail className="h-4 w-4" />
-                                            <a
-                                                href={`mailto:${submission.email}`}
-                                                className="hover:underline"
-                                            >
-                                                {submission.email}
-                                            </a>
+                                            <span>{submission.fileType || "N/A"}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-gray-500">
                                             <Calendar className="h-4 w-4" />
                                             <span>{formatDate(submission.timestamp)}</span>
                                         </div>
                                     </div>
-                                    <Button
-                                        onClick={() => handleDelete(submission.id)}
-                                        variant="ghost"
-                                        size="sm"
-                                        disabled={deleting === submission.id}
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                        {deleting === submission.id ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Trash2 className="h-4 w-4" />
-                                        )}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            onClick={() => setExpandedFile(expandedFile === submission.id ? null : submission.id)}
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-2"
+                                        >
+                                            {expandedFile === submission.id ? (
+                                                <><EyeOff className="h-4 w-4" /> Hide</>
+                                            ) : (
+                                                <><Eye className="h-4 w-4" /> View</>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            onClick={() => handleDelete(submission.id)}
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={deleting === submission.id}
+                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                            {deleting === submission.id ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="border-t pt-4">
                                     <p className="text-sm font-medium text-gray-700 mb-2">
-                                        Message:
+                                        File Details:
                                     </p>
-                                    <p className="text-gray-800 whitespace-pre-wrap">
-                                        {submission.message}
+                                    <p className="text-gray-800 mb-3">
+                                        <strong>Size:</strong> {(submission.fileSize / 1024).toFixed(2)}KB
                                     </p>
+                                    {submission.fileURL && (
+                                        <a
+                                            href={submission.fileURL}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:underline text-sm"
+                                        >
+                                            Download File
+                                        </a>
+                                    )}
                                 </div>
+                                {expandedFile === submission.id && submission.fileURL && (
+                                    <div className="border-t pt-4 mt-4">
+                                        <p className="text-sm font-medium text-gray-700 mb-3">Preview:</p>
+                                        <div className="bg-gray-100 rounded-lg overflow-hidden">
+                                            {submission.fileType?.includes('pdf') ? (
+                                                <iframe
+                                                    src={submission.fileURL}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '600px',
+                                                        border: 'none',
+                                                    }}
+                                                    title="PDF Viewer"
+                                                />
+                                            ) : submission.fileType?.includes('image') ? (
+                                                <img
+                                                    src={submission.fileURL}
+                                                    alt="File preview"
+                                                    style={{
+                                                        width: '100%',
+                                                        maxHeight: '600px',
+                                                        objectFit: 'contain',
+                                                    }}
+                                                />
+                                            ) : submission.fileType?.includes('csv') || submission.fileType?.includes('text') ? (
+                                                <div className="p-4 bg-white text-sm">
+                                                    <p className="text-gray-600 mb-3">Preview (first 50 lines):</p>
+                                                    <CSVPreview fileURL={submission.fileURL} />
+                                                </div>
+                                            ) : submission.fileType?.includes('presentation') || submission.fileType?.includes('powerpoint') ? (
+                                                <div className="p-4 bg-white">
+                                                    <p className="text-gray-600 mb-2">PPTX files cannot be previewed in browser</p>
+                                                    <a
+                                                        href={submission.fileURL}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline"
+                                                    >
+                                                        Open in new tab
+                                                    </a>
+                                                </div>
+                                            ) : submission.fileType?.includes('word') || submission.fileType?.includes('document') ? (
+                                                <div className="p-4 bg-white">
+                                                    <p className="text-gray-600 mb-2">Document files cannot be previewed in browser</p>
+                                                    <a
+                                                        href={submission.fileURL}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline"
+                                                    >
+                                                        Download to view
+                                                    </a>
+                                                </div>
+                                            ) : (
+                                                <div className="p-4 text-gray-600">
+                                                    Preview not available for {submission.fileType || 'this'} files. 
+                                                    <a
+                                                        href={submission.fileURL}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline ml-2"
+                                                    >
+                                                        Download instead
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

@@ -1,9 +1,6 @@
 import { useForm } from "react-hook-form";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase/app";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
 import {
   Form,
   FormControl,
@@ -13,11 +10,12 @@ import {
   FormMessage,
 } from "./ui/form";
 
-/** Contact Form Component
- * - Uses react-hook-form for form state management and validation
- * - Saves files to Firestore as Base64 encoded data
- * - No CORS issues - everything stays within Firebase ecosystem
-*/
+/**
+ * Depression Detector Form Component
+ * - Upload file (PDF, CSV, TXT)
+ * - Backend processes with Llama
+ * - Returns PDF report for download
+ */
 export default function ContactForm({ onSuccess }) {
   const form = useForm({
     defaultValues: {
@@ -26,50 +24,50 @@ export default function ContactForm({ onSuccess }) {
   });
 
   const onSubmit = async (values) => {
-    console.log("SUBMIT FIRED", values);
-    console.log("FILE:", values.file, values.file instanceof File);
-
     try {
       if (!values.file) {
         alert("Please select a file");
         return;
       }
 
-      console.log("Reading file as Base64...");
+      const file = values.file;
+      console.log(`Processing ${file.name}...`);
       
-      // Convert file to Base64 using a safe method
-      const fileData = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(values.file);
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Send to backend for processing
+      const response = await fetch('http://localhost:5000/api/upload', {
+        method: 'POST',
+        body: formData,
       });
 
-      // fileData is already in "data:image/png;base64,..." format
-      // Extract just the base64 part
-      const base64String = fileData.split(',')[1];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Processing failed: ${response.statusText}`);
+      }
 
-      console.log("Saving file to Firestore...");
-      
-      // Save to Firestore with Base64 encoded file
-      await addDoc(collection(db, "submissions"), {
-        fileName: values.file.name,
-        fileType: values.file.type,
-        fileSize: values.file.size,
-        fileData: base64String,
-        timestamp: new Date(),
-      });
+      // Download the PDF report
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       form.reset({ file: null });
-      alert("File saved successfully!");
+      alert("Report generated and downloaded successfully!");
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("Error:", error);
       alert(`Error: ${error.message}`);
     }
   };
 
-  // Contact Form UI
   return (
     <div className="w-full">
       <Form {...form}>
@@ -77,18 +75,21 @@ export default function ContactForm({ onSuccess }) {
           <FormField
             control={form.control}
             name="file"
-            rules={{ required: "Please upload a file" }}
+            rules={{ required: "Please select a file to analyze" }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Upload File</FormLabel>
+                <FormLabel>Upload Document for Analysis</FormLabel>
                 <FormControl>
                   <Input
                     type="file"
-                    accept=".pdf,.doc,.docx,.png,.jpg,.csv,.txt,.xlsx"
+                    accept=".pdf,.csv,.txt"
                     onChange={(e) => field.onChange(e.target.files[0])}
                   />
                 </FormControl>
                 <FormMessage />
+                <p className="text-sm text-gray-500 mt-2">
+                  Supported formats: PDF, CSV, TXT
+                </p>
               </FormItem>
             )}
           />
@@ -96,7 +97,7 @@ export default function ContactForm({ onSuccess }) {
             type="submit"
             className="w-full"
             disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Submitting..." : "Send Message"}
+            {form.formState.isSubmitting ? "Analyzing..." : "Analyze & Generate Report"}
           </Button>
         </form>
       </Form>

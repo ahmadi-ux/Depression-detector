@@ -57,46 +57,10 @@ export default function Navigation() {
 
           <NavigationMenuItem>
             <button
-              onClick={() => scrollToSection('experience')}
+              onClick={() => scrollToSection('DataUpload')}
               className={buttonClass}
             >
-              Experience
-            </button>
-          </NavigationMenuItem>
-
-          <NavigationMenuItem>
-            <button
-              onClick={() => scrollToSection('skills')}
-              className={buttonClass}
-            >
-              Skills
-            </button>
-          </NavigationMenuItem>
-
-          <NavigationMenuItem>
-            <button
-              onClick={() => scrollToSection('projects')}
-              className={buttonClass}
-            >
-              Projects
-            </button>
-          </NavigationMenuItem>
-
-          <NavigationMenuItem>
-            <button
-              onClick={() => scrollToSection('aboutme')}
-              className={buttonClass}
-            >
-              About Me
-            </button>
-          </NavigationMenuItem>
-
-          <NavigationMenuItem>
-            <button
-              onClick={() => scrollToSection('contactme')}
-              className={buttonClass}
-            >
-              Contact Me
+              Data Upload
             </button>
           </NavigationMenuItem>
         </NavigationMenuList>
