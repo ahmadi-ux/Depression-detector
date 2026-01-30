@@ -1,0 +1,6 @@
+# Use the official Ollama image
+# See https://github.com/ollama/ollama/blob/main/docs/docker.md
+FROM ollama/ollama:latest
+
+# Copy local models into the Ollama container
+COPY models/ /root/.ollama/models/
