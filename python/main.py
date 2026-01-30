@@ -7,6 +7,8 @@ import time
 import requests
 import sys
 
+#ALL SYSTEM related code is irrelevant and is handled by docker on deployment
+
 
 def chat_from_response(response: dict) -> str:
     """
