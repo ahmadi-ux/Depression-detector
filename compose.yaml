@@ -1,0 +1,6 @@
+services:
+  depressiondetector:
+    image: depressiondetector
+    build:
+      context: .
+      dockerfile: ./Dockerfile
