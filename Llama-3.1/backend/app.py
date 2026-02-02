@@ -193,6 +193,54 @@ def generate_pdf_report(filename, extracted_text, llama_output):
     
     return pdf_buffer
 
+def generate_combined_pdf_report(results):
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Combined Depression Analysis Report", styles['Heading1']))
+    elements.append(Spacer(1, 0.3 * inch))
+
+    for result in results:
+        elements.append(Paragraph(
+            f"File: {result['filename']}",
+            styles['Heading2']
+        ))
+
+        analysis = result["analysis"]
+
+        elements.append(Paragraph(
+            f"Label: <b>{analysis['label']}</b>",
+            styles['Normal']
+        ))
+        elements.append(Paragraph(
+            f"Confidence: {analysis['confidence'] * 100:.1f}%",
+            styles['Normal']
+        ))
+
+        if analysis.get("signals"):
+            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Paragraph("Detected Signals:", styles['Heading3']))
+            for signal, value in analysis["signals"].items():
+                elements.append(Paragraph(
+                    f"- {signal}: {value:.2f}",
+                    styles['Normal']
+                ))
+
+        elements.append(Spacer(1, 0.2 * inch))
+
+        preview = result["text"][:500]
+        elements.append(Paragraph("Text Preview:", styles['Heading3']))
+        elements.append(Paragraph(preview + "...", styles['Normal']))
+
+        elements.append(Spacer(1, 0.4 * inch))
+
+    doc.build(elements)
+    pdf_buffer.seek(0)
+    return pdf_buffer
+
+
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================
@@ -205,10 +253,20 @@ def upload_file():
     try:
         print("=== UPLOAD REQUEST RECEIVED ===")
         
-        if 'file' not in request.files:
+        files = request.files.getlist("files")
+
+        if not files or len(files) == 0:
             return jsonify({'error': 'No file provided'}), 400
         
-        file = request.files['file']
+        file_payloads = [
+            {
+                "filename": f.filename,
+                "bytes": f.read()
+            }
+            for f in files
+        ]
+
+        file = files[0]  # Use first file
         
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
@@ -221,7 +279,7 @@ def upload_file():
         jobs[job_id] = {
             'status': 'processing',
             'progress': 0,
-            'filename': file.filename,
+            'filename': [f.filename for f in files],
             'created_at': datetime.now().isoformat()
         }
         
@@ -231,8 +289,8 @@ def upload_file():
         
         # Start background processing
         thread = threading.Thread(
-            target=process_file_async,
-            args=(job_id, file_content, file.filename),
+            target=process_multiple_files_async,
+            args=(job_id, file_payloads),
             daemon=True
         )
         thread.start()
@@ -356,6 +414,53 @@ def process_file_async(job_id, file_bytes, filename):
             'created_at': jobs[job_id].get('created_at'),
             'failed_at': datetime.now().isoformat()
         }
+
+def process_multiple_files_async(job_id, file_payloads):
+    try:
+        combined_results = []
+        combined_text = ""
+
+        total_files = len(file_payloads)
+
+        for idx, payload in enumerate(file_payloads):
+            file = FileStorage(
+                stream=io.BytesIO(payload["bytes"]),
+                filename=payload["filename"]
+            )
+
+            jobs[job_id]['progress'] = int((idx / total_files) * 40)
+
+            extracted_text = extract_text_from_file(file)
+            combined_text += f"\n\n--- {payload['filename']} ---\n\n"
+            combined_text += extracted_text
+
+            llama_output = process_with_llama(extracted_text)
+
+            combined_results.append({
+                "filename": payload["filename"],
+                "text": extracted_text,
+                "analysis": llama_output
+            })
+
+        jobs[job_id]['progress'] = 70
+
+        pdf = generate_combined_pdf_report(combined_results)
+        pdf_data = pdf.getvalue()
+
+        jobs[job_id] = {
+            'status': 'complete',
+            'progress': 100,
+            'filenames': [f["filename"] for f in file_payloads],
+            'pdf': pdf_data,
+            'completed_at': datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        jobs[job_id] = {
+            'status': 'error',
+            'error': str(e)
+        }
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

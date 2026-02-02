@@ -19,23 +19,25 @@ import {
 export default function ContactForm({ onSuccess }) {
   const form = useForm({
     defaultValues: {
-      file: null,
+      files: [],
     },
   });
 
   const onSubmit = async (values) => {
     try {
-      if (!values.file) {
-        alert("Please select a file");
+      if (!values.files || values.files.length === 0) {
+        alert("Please select at least one file");
         return;
       }
 
-      const file = values.file;
-      console.log(`Processing ${file.name}...`);
-      
-      // Create FormData
+      const files = values.files;
+      console.log(`Processing ${files.length} file(s)...`);
+
       const formData = new FormData();
-      formData.append('file', file);
+      files.forEach((file) => {
+        formData.append("files", file); // MUST be "files"
+      });
+
 
       // Send to backend - returns immediately with job ID
       console.log("Submitting file...");
@@ -133,16 +135,17 @@ export default function ContactForm({ onSuccess }) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
-            name="file"
-            rules={{ required: "Please select a file to analyze" }}
+            name="files"
+            rules={{ required: "Please select at least one file to analyze" }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Upload Document for Analysis</FormLabel>
+                <FormLabel>Upload Documents for Analysis</FormLabel>
                 <FormControl>
                   <Input
                     type="file"
                     accept=".pdf,.csv,.txt"
-                    onChange={(e) => field.onChange(e.target.files[0])}
+                    multiple
+                    onChange={(e) => field.onChange(Array.from(e.target.files))}
                   />
                 </FormControl>
                 <FormMessage />
