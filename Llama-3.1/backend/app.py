@@ -81,6 +81,8 @@ def process_with_llama(text_content):
             "label": result.get("label", "UNKNOWN"),
             "confidence": result.get("confidence", 0),
             "signals": result.get("signals", {}),
+            "all_signals": result.get("all_signals", {}),
+            "explanations": result.get("explanations", {}),
             "key_findings": [
                 f"Classification: {result.get('label', 'UNKNOWN')}",
                 f"Confidence: {result.get('confidence', 0) * 100:.1f}%",
@@ -156,6 +158,16 @@ def generate_pdf_report(filename, extracted_text, llama_output):
             elements.append(Paragraph(f"• {signal.capitalize()}: {value:.2f}", styles['Normal']))
         elements.append(Spacer(1, 0.2*inch))
     
+    # Add signal explanations
+    explanations = llama_output.get('explanations', {})
+    if explanations:
+        elements.append(Paragraph("<b>Signal Explanations</b>", styles['Heading2']))
+        for signal, explanation in explanations.items():
+            if explanation:  # Only show non-empty explanations
+                elements.append(Paragraph(f"<b>{signal.capitalize()}:</b> {explanation}", styles['Normal']))
+                elements.append(Spacer(1, 0.1*inch))
+        elements.append(Spacer(1, 0.1*inch))
+    
     # Add key findings
     elements.append(Paragraph("<b>Key Findings</b>", styles['Heading2']))
     for finding in llama_output.get('key_findings', []):
@@ -177,7 +189,9 @@ def generate_pdf_report(filename, extracted_text, llama_output):
         spaceAfter=12,
     )
     elements.append(Paragraph(
-        "<i>Disclaimer: This analysis is for research purposes only. It should not be used as a substitute for professional mental health diagnosis or treatment. Please consult with a qualified mental health professional for proper assessment and care.</i>",
+        "<i>Disclaimer: This analysis is for research purposes only." 
+        " It should not be used as a substitute for professional mental health diagnosis or treatment." 
+        " Please consult with a qualified mental health professional for proper assessment and care.</i>",
         disclaimer_style
     ))
     
@@ -227,6 +241,18 @@ def generate_combined_pdf_report(results):
                     f"- {signal}: {value:.2f}",
                     styles['Normal']
                 ))
+        
+        # Add explanations
+        if analysis.get("explanations"):
+            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Paragraph("Signal Explanations:", styles['Heading3']))
+            for signal, explanation in analysis["explanations"].items():
+                if explanation:  # Only show non-empty explanations
+                    elements.append(Paragraph(
+                        f"<b>{signal.capitalize()}:</b> {explanation}",
+                        styles['Normal']
+                    ))
+                    elements.append(Spacer(1, 0.05 * inch))
 
         elements.append(Spacer(1, 0.2 * inch))
 
@@ -460,7 +486,6 @@ def process_multiple_files_async(job_id, file_payloads):
             'status': 'error',
             'error': str(e)
         }
-
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

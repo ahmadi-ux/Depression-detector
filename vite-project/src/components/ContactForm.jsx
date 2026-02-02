@@ -38,7 +38,6 @@ export default function ContactForm({ onSuccess }) {
         formData.append("files", file); // MUST be "files"
       });
 
-
       // Send to backend - returns immediately with job ID
       console.log("Submitting file...");
       const uploadResponse = await fetch('http://localhost:5000/api/upload', {
