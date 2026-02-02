@@ -180,7 +180,6 @@ def analyze_text(text: str) -> dict:
     
     return classification
 
-
 if __name__ == "__main__":
     # Test the function
     test_text = "I feel empty most days and I'm exhausted trying to keep up with classes."
