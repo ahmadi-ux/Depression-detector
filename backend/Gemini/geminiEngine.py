@@ -11,11 +11,33 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
 from werkzeug.datastructures import FileStorage
-from interface import analyze_text
+from .interface import analyze_text
 from uuid import UUID
+from werkzeug.datastructures import FileStorage
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+def run_gemini_job(file_payloads):
+    """
+    Entry point called by the main backend router
+    """
+    combined_results = []
+
+    for payload in file_payloads:
+        file = FileStorage(
+            stream=io.BytesIO(payload["bytes"]),
+            filename=payload["filename"]
+        )
+
+        extracted_text = extract_text_from_file(file)
+        gemini_output = process_with_gemini(extracted_text)
+
+        combined_results.append({
+            "filename": payload["filename"],
+            "text": extracted_text,
+            "analysis": gemini_output
+        })
+
+    pdf = generate_combined_pdf_report(combined_results)
+    return pdf.getvalue()
 
 # Job storage (in production, use Redis or database)
 jobs = {}
@@ -64,13 +86,13 @@ def extract_text_from_file(file):
     else:
         raise Exception(f"Unsupported file type: {os.path.splitext(filename)[1]}")
 
-def process_with_llama(text_content):
+def process_with_gemini(text_content):
     """
-    Process text content with Llama using interface.py
+    Process text content with Gemini using interface.py
     Extracts depression signals and classifies the text
     """
     try:
-        print(f"Processing text with Llama (length: {len(text_content)} chars)...")
+        print(f"Processing text with Gemini (length: {len(text_content)} chars)...")
         
         # Call interface.py's analyze_text function
         result = analyze_text(text_content)
@@ -95,11 +117,11 @@ def process_with_llama(text_content):
             ]
         }
     except Exception as e:
-        print(f"Error in Llama processing: {str(e)}")
+        print(f"Error in Gemini processing: {str(e)}")
         raise
 
-def generate_pdf_report(filename, extracted_text, llama_output):
-    """Generate a PDF report from Llama output"""
+def generate_pdf_report(filename, extracted_text, gemini_output):
+    """Generate a PDF report from Gemini output"""
     # Create PDF in memory
     pdf_buffer = io.BytesIO()
     
@@ -135,8 +157,8 @@ def generate_pdf_report(filename, extracted_text, llama_output):
     
     # Add classification result
     elements.append(Paragraph("<b>Classification Result</b>", styles['Heading2']))
-    label = llama_output.get('label', 'UNKNOWN')
-    confidence = llama_output.get('confidence', 0)
+    label = gemini_output.get('label', 'UNKNOWN')
+    confidence = gemini_output.get('confidence', 0)
     
     result_color = '#dc2626' if label == 'DEPRESSED' else '#16a34a'
     result_style = ParagraphStyle(
@@ -151,7 +173,7 @@ def generate_pdf_report(filename, extracted_text, llama_output):
     elements.append(Spacer(1, 0.2*inch))
     
     # Add detected signals
-    signals = llama_output.get('signals', {})
+    signals = gemini_output.get('signals', {})
     if signals:
         elements.append(Paragraph("<b>Detected Depression Signals</b>", styles['Heading2']))
         for signal, value in signals.items():
@@ -159,7 +181,7 @@ def generate_pdf_report(filename, extracted_text, llama_output):
         elements.append(Spacer(1, 0.2*inch))
     
     # Add signal explanations
-    explanations = llama_output.get('explanations', {})
+    explanations = gemini_output.get('explanations', {})
     if explanations:
         elements.append(Paragraph("<b>Signal Explanations</b>", styles['Heading2']))
         for signal, explanation in explanations.items():
@@ -170,13 +192,13 @@ def generate_pdf_report(filename, extracted_text, llama_output):
     
     # Add key findings
     elements.append(Paragraph("<b>Key Findings</b>", styles['Heading2']))
-    for finding in llama_output.get('key_findings', []):
+    for finding in gemini_output.get('key_findings', []):
         elements.append(Paragraph(f"• {finding}", styles['Normal']))
     elements.append(Spacer(1, 0.2*inch))
     
     # Add recommendations
     elements.append(Paragraph("<b>Recommendations</b>", styles['Heading2']))
-    for rec in llama_output.get('recommendations', []):
+    for rec in gemini_output.get('recommendations', []):
         elements.append(Paragraph(f"• {rec}", styles['Normal']))
     elements.append(Spacer(1, 0.3*inch))
     
@@ -266,112 +288,6 @@ def generate_combined_pdf_report(results):
     pdf_buffer.seek(0)
     return pdf_buffer
 
-
-# ============================================================================
-# API ENDPOINTS
-# ============================================================================
-
-@app.route('/api/upload', methods=['POST'])
-def upload_file():
-    """
-    Return job ID immediately, process file in background
-    """
-    try:
-        print("=== UPLOAD REQUEST RECEIVED ===")
-        
-        files = request.files.getlist("files")
-
-        if not files or len(files) == 0:
-            return jsonify({'error': 'No file provided'}), 400
-        
-        file_payloads = [
-            {
-                "filename": f.filename,
-                "bytes": f.read()
-            }
-            for f in files
-        ]
-
-        file = files[0]  # Use first file
-        
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-        
-        # Generate unique job ID
-        job_id = str(uuid4())
-        print(f"Created job: {job_id}")
-        
-        # Initialize job
-        jobs[job_id] = {
-            'status': 'processing',
-            'progress': 0,
-            'filename': [f.filename for f in files],
-            'created_at': datetime.now().isoformat()
-        }
-        
-        # Read file content (must do this in main thread before passing to worker)
-        file_content = file.read()
-        file.seek(0)  # Reset for extraction
-        
-        # Start background processing
-        thread = threading.Thread(
-            target=process_multiple_files_async,
-            args=(job_id, file_payloads),
-            daemon=True
-        )
-        thread.start()
-        
-        return jsonify({
-            'job_id': job_id,
-            'status': 'processing',
-            'message': 'File processing started'
-        }), 202  # 202 Accepted
-        
-    except Exception as e:
-        print(f"ERROR in upload: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/job/<job_id>', methods=['GET'])
-def get_job_status(job_id):
-    """
-    Check job status and get result when ready
-    """
-    if job_id not in jobs:
-        return jsonify({'error': 'Job not found'}), 404
-    
-    job = jobs[job_id]
-    
-    # If complete, return PDF file
-    if job['status'] == 'complete':
-        pdf_data = job.get('pdf')
-        if pdf_data:
-            return send_file(
-                io.BytesIO(pdf_data),
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f"report_{job_id[:8]}.pdf"
-            )
-    
-    # If error, return error
-    if job['status'] == 'error':
-        return jsonify({
-            'status': 'error',
-            'error': job.get('error', 'Unknown error'),
-            'job_id': job_id
-        }), 400
-    
-    # If processing, return status
-    return jsonify({
-        'job_id': job_id,
-        'status': job['status'],
-        'progress': job.get('progress', 0),
-        'filename': job.get('filename'),
-        'created_at': job.get('created_at')
-    }), 200
-
-from werkzeug.datastructures import FileStorage
-import io
-
 def process_file_async(job_id, file_bytes, filename):
     """
     Background worker: Extract → Analyze → Generate PDF
@@ -397,20 +313,19 @@ def process_file_async(job_id, file_bytes, filename):
         print(f"[{job_id}] ✓ Extracted {len(extracted_text)} characters")
         jobs[job_id]['progress'] = 30
 
-        # Step 2: Process with Llama
-        print(f"[{job_id}] Step 2: Processing with Llama...")
+        # Step 2: Process with Gemini
+        print(f"[{job_id}] Step 2: Processing with Gemini...")
         jobs[job_id]['progress'] = 40
 
-        llama_output = process_with_llama(extracted_text)
-
-        print(f"[{job_id}] ✓ Llama analysis complete")
-        print(f"[{job_id}]   - Label: {llama_output.get('label')}")
-        print(f"[{job_id}]   - Confidence: {llama_output.get('confidence')}")
+        gemini_output = process_with_gemini(extracted_text)
+        print(f"[{job_id}] ✓ Gemini analysis complete")
+        print(f"[{job_id}]   - Label: {gemini_output.get('label')}")
+        print(f"[{job_id}]   - Confidence: {gemini_output.get('confidence')}")
         jobs[job_id]['progress'] = 70
 
         # Step 3: Generate PDF
         print(f"[{job_id}] Step 3: Generating PDF...")
-        pdf_report = generate_pdf_report(filename, extracted_text, llama_output)
+        pdf_report = generate_pdf_report(filename, extracted_text, gemini_output)
         pdf_data = pdf_report.getvalue()
 
         print(f"[{job_id}] ✓ PDF generated ({len(pdf_data)} bytes)")
@@ -460,12 +375,12 @@ def process_multiple_files_async(job_id, file_payloads):
             combined_text += f"\n\n--- {payload['filename']} ---\n\n"
             combined_text += extracted_text
 
-            llama_output = process_with_llama(extracted_text)
+            gemini_output = process_with_gemini(extracted_text)
 
             combined_results.append({
                 "filename": payload["filename"],
                 "text": extracted_text,
-                "analysis": llama_output
+                "analysis": gemini_output
             })
 
         jobs[job_id]['progress'] = 70
@@ -486,11 +401,3 @@ def process_multiple_files_async(job_id, file_payloads):
             'status': 'error',
             'error': str(e)
         }
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()}), 200
-
-if __name__ == '__main__':
-    app.run(debug=False, port=5000)

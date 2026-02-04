@@ -13,10 +13,10 @@ import {
 /**
  * Depression Detector Form Component
  * - Upload file (PDF, CSV, TXT)
- * - Backend processes with Llama
+ * - Backend processes with llms
  * - Returns PDF report for download
  */
-export default function ContactForm({ onSuccess }) {
+export default function ContactForm({ onSuccess, llm }) {
   const form = useForm({
     defaultValues: {
       files: [],
@@ -34,8 +34,9 @@ export default function ContactForm({ onSuccess }) {
       console.log(`Processing ${files.length} file(s)...`);
 
       const formData = new FormData();
+      formData.append("llm", llm);  // Add this
       files.forEach((file) => {
-        formData.append("files", file); // MUST be "files"
+        formData.append("files", file);
       });
 
       // Send to backend - returns immediately with job ID
