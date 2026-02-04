@@ -6,7 +6,7 @@ import threading
 from datetime import datetime
 from Gemini.geminiEngine import run_gemini_job
 from Llama.llamaEngine import run_llama_job 
-from Groq.groqEngine import run_groq_job
+from ChatGPT.chatGPTEngine import run_chatgpt_job
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +16,7 @@ jobs = {}  # In-memory job store (use Redis/DB in prod)
 LLM_HANDLERS = {
     "gemini": run_gemini_job,
     "llama": run_llama_job,
-    "groq": run_groq_job
+    "chatgpt": run_chatgpt_job
 }
 
 @app.route("/api/upload", methods=["POST"])

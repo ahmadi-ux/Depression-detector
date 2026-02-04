@@ -59,8 +59,8 @@ export default function DataUpload() {
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("LLaMA")}>
                       LLaMA
                   </DropdownMenuItem>
-                  <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Groq")}>
-                      Groq
+                  <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("ChatGPT")}>
+                      Chat GPT
                   </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

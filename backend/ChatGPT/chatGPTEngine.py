@@ -15,18 +15,18 @@ if not client.api_key:
     raise ValueError("GROQ_API_KEY environment variable is not set")
 
 # You can choose different models here
-GROQ_MODEL = "llama-3.1-8b-instant"
+GROQ_MODEL = "openai/gpt-oss-120b"   
 
-def run_llama_job(file_payloads):
+def run_chatgpt_job(file_payloads):
     combined_results = []
     for payload in file_payloads:
         file = FileStorage(stream=io.BytesIO(payload["bytes"]), filename=payload["filename"])
         extracted_text = extract_text_from_file(file)
-        llama_output = analyze_text(extracted_text)  # Use interface
+        chatgpt_output = analyze_text(extracted_text)  # Use interface
         combined_results.append({
             "filename": payload["filename"],
             "text": extracted_text,
-            "analysis": llama_output
+            "analysis": chatgpt_output
         })
-    pdf = generate_combined_pdf_report(combined_results, title_suffix="Llama")
+    pdf = generate_combined_pdf_report(combined_results, title_suffix="ChatGPT")
     return pdf.getvalue()
