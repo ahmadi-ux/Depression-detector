@@ -62,6 +62,15 @@ export default function DataUpload() {
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("ChatGPT")}>
                       Chat GPT
                   </DropdownMenuItem>
+                  <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Kimi")}>
+                      Kimi
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Qwen")}>
+                      Qwen
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Compound")}>
+                      Compound
+                  </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <ContactForm onSuccess={() => setOpen(false)} llm={selectedLLM} />

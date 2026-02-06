@@ -7,6 +7,9 @@ from datetime import datetime
 from backend.Gemini.geminiEngine import run_gemini_job
 from backend.Llama.llamaEngine import run_llama_job 
 from backend.ChatGPT.chatGPTEngine import run_chatgpt_job
+from backend.Kimik2.KimiEngine import run_kimi_job as run_kimi_job
+from backend.Gwen.GwenEngine import run_qwen_job as run_gwen_job
+from backend.Compound.CompundEngine import run_compound_job as run_compound_job
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +19,10 @@ jobs = {}  # In-memory job store (use Redis/DB in prod)
 LLM_HANDLERS = {
     "gemini": run_gemini_job,
     "llama": run_llama_job,
-    "chatgpt": run_chatgpt_job
+    "chatgpt": run_chatgpt_job,
+    "kimi": run_kimi_job,
+    "qwen": run_gwen_job,
+    "compound": run_compound_job
 }
 
 @app.route("/api/upload", methods=["POST"])
@@ -70,7 +76,7 @@ def get_job(job_id):
             io.BytesIO(job["pdf"]),
             mimetype="application/pdf",
             as_attachment=True,
-            download_name=f"{job_id[:8]}_report.pdf"
+            download_name=f"{job_id[:16]}_report.pdf"
         )
     elif job["status"] == "error":
         return jsonify({"status": "error", "error": job["error"]}), 400
