@@ -10,6 +10,8 @@ import {
   FormMessage,
 } from "./ui/form";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 /**
  * Depression Detector Form Component
  * - Upload file (PDF, CSV, TXT)
@@ -41,7 +43,7 @@ export default function ContactForm({ onSuccess, llm }) {
 
       // Send to backend - returns immediately with job ID
       console.log("Submitting file...");
-      const uploadResponse = await fetch('http://localhost:5000/api/upload', {
+      const uploadResponse = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -70,7 +72,7 @@ export default function ContactForm({ onSuccess, llm }) {
 
         try {
           console.log(`[Poll ${pollCount}] Checking status for job ${jobId.substring(0, 8)}...`);
-          const statusResponse = await fetch(`http://localhost:5000/api/job/${jobId}`);
+          const statusResponse = await fetch(`${API_URL}/api/job/${jobId}`);
           
           if (!statusResponse.ok) {
             const errorData = await statusResponse.json();
