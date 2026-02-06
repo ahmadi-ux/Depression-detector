@@ -2,8 +2,6 @@ import requests
 import json
 import re
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-
 SIGNAL_THRESHOLDS = {
     "sadness": 0.6,
     "anhedonia": 0.6,
