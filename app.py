@@ -4,9 +4,9 @@ import io
 from uuid import uuid4
 import threading
 from datetime import datetime
-from Gemini.geminiEngine import run_gemini_job
-from Llama.llamaEngine import run_llama_job 
-from ChatGPT.chatGPTEngine import run_chatgpt_job
+from backend.Gemini.geminiEngine import run_gemini_job
+from backend.Llama.llamaEngine import run_llama_job 
+from backend.ChatGPT.chatGPTEngine import run_chatgpt_job
 
 app = Flask(__name__)
 CORS(app)
