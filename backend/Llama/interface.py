@@ -74,48 +74,48 @@ def extract_signals(text: str) -> dict:
     {text}
     """
 
-    response = requests.post(
-    json={
-        "model": "llama3.1:8b",
-        "prompt": prompt,
-        "stream": False,
-
-        # Hard stateless guarantees
-        "temperature": 0.0,
-        "context": [],
-        "keep_alive": 0,
-        "stop": [
-            "\n\nHere",
-            "Here's",
-            "Reasoning",
-            "Explanation:"
-        ]
-    },
-    timeout=600
-)
-
-
     raw = response.json()["response"]
 
     try:
-        # Try to parse the entire response as JSON first
+        # Generate content with new SDK
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.0,
+                top_p=1,
+                top_k=1,
+                max_output_tokens=2048,
+            )
+        )
+        
+        # Get the response text
+        raw = response.text.strip()
+        
+        # Clean up markdown code blocks if present
+        if raw.startswith("```json"):
+            raw = raw[7:]  # Remove ```json
+        if raw.startswith("```"):
+            raw = raw[3:]  # Remove ```
+        if raw.endswith("```"):
+            raw = raw[:-3]  # Remove trailing ```
+        raw = raw.strip()
+        
+        # Parse JSON
         data = json.loads(raw)
+        
         return {
             "signals": data["signals"],
             "explanations": data.get("explanations", {})
         }
-    except json.JSONDecodeError:
-        # If that fails, try to extract JSON using regex
-        json_match = re.search(r'\{[\s\S]*\}', raw)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            return {
-                "signals": data["signals"],
-                "explanations": data.get("explanations", {})
-            }
-        else:
-            raise RuntimeError(f"Failed to parse model output:\n{raw}")
-
+        
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON from Gemini response:")
+        print(f"Raw response: {raw}")
+        raise RuntimeError(f"Failed to parse Gemini output as JSON: {str(e)}")
+    except Exception as e:
+        print(f"Error calling Gemini API: {str(e)}")
+        raise
 
 def classify_from_signals(signals: dict) -> dict:
     triggered = {
