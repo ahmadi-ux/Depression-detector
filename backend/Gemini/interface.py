@@ -6,13 +6,11 @@ from google.genai import types
 import json
 import os
 
-# ============================================================================
-# GEMINI API CONFIGURATION
-# ============================================================================
-
 # Get API key from environment variable
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyA-jkCnWGGzJBuiQvfGWnaYv4f0LmrC7Rc")
-
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable is not set")
+    
 # Configure Gemini with new SDK
 client = genai.Client(api_key=GEMINI_API_KEY)
 
