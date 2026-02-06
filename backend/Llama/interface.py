@@ -75,7 +75,6 @@ def extract_signals(text: str) -> dict:
     """
 
     response = requests.post(
-    OLLAMA_URL,
     json={
         "model": "llama3.1:8b",
         "prompt": prompt,
