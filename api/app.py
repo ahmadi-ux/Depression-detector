@@ -83,5 +83,16 @@ def get_job(job_id):
             "created_at": job.get("created_at")
         })
 
-#if __name__ == "__main__":
-#    app.run(debug=True, port=5000)
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "message": "Depression Detector API", 
+        "status": "running",
+        "endpoints": {
+            "upload": "/api/upload",
+            "job_status": "/api/job/<job_id>"
+        }
+    })
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)

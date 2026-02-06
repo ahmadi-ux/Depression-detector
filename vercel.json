@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "vite-project/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "vite-project/dist"
+      }
+    },
+    {
+      "src": "api/app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/vite-project/$1"
+    }
+  ]
+}
