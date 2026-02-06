@@ -10,13 +10,15 @@ import {
   FormMessage,
 } from "./ui/form";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+console.log("API_URL:", API_URL);
 /**
  * Depression Detector Form Component
  * - Upload file (PDF, CSV, TXT)
- * - Backend processes with Llama
+ * - Backend processes with llms
  * - Returns PDF report for download
  */
-export default function ContactForm({ onSuccess }) {
+export default function ContactForm({ onSuccess, llm }) {
   const form = useForm({
     defaultValues: {
       files: [],
@@ -34,13 +36,14 @@ export default function ContactForm({ onSuccess }) {
       console.log(`Processing ${files.length} file(s)...`);
 
       const formData = new FormData();
+      formData.append("llm", llm);  // Add this
       files.forEach((file) => {
-        formData.append("files", file); // MUST be "files"
+        formData.append("files", file);
       });
 
       // Send to backend - returns immediately with job ID
       console.log("Submitting file...");
-      const uploadResponse = await fetch('http://localhost:5000/api/upload', {
+      const uploadResponse = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -69,7 +72,7 @@ export default function ContactForm({ onSuccess }) {
 
         try {
           console.log(`[Poll ${pollCount}] Checking status for job ${jobId.substring(0, 8)}...`);
-          const statusResponse = await fetch(`http://localhost:5000/api/job/${jobId}`);
+          const statusResponse = await fetch(`${API_URL}/api/job/${jobId}`);
           
           if (!statusResponse.ok) {
             const errorData = await statusResponse.json();
