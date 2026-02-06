@@ -11,7 +11,7 @@ import {
 } from "./ui/form";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
+console.log("API_URL:", API_URL);
 /**
  * Depression Detector Form Component
  * - Upload file (PDF, CSV, TXT)
