@@ -1,6 +1,23 @@
-import requests
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
+
+from google import genai
+from google.genai import types
 import json
-import re
+import os
+
+# ============================================================================
+# GEMINI API CONFIGURATION
+# ============================================================================
+
+# Get API key from environment variable
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyA-jkCnWGGzJBuiQvfGWnaYv4f0LmrC7Rc")
+
+# Configure Gemini with new SDK
+client = genai.Client(api_key=GEMINI_API_KEY)
+
+# Choose your model
+MODEL_NAME = "gemini-flash-latest"
 
 SIGNAL_THRESHOLDS = {
     "sadness": 0.6,
@@ -14,46 +31,49 @@ MIN_SIGNALS_FOR_DEPRESSED = 2
 
 
 def extract_signals(text: str) -> dict:
+    """
+    Use Gemini to analyze text for depression signals
+    """
     prompt = f"""
-    You are a clinical-language research assistant.
+You are a clinical-language research assistant.
 
-    Your task is to analyze the text and estimate the presence of specific
-    depression-related linguistic signals.
+Your task is to analyze the text and estimate the presence of specific
+depression-related linguistic signals.
 
-    RULES:
-    - Do NOT diagnose.
-    - Do NOT classify.
-    - Do NOT give advice.
-    - Do NOT include text outside the JSON object.
-    - Explanations must be short, neutral, and evidence-based.
-    - If no evidence exists, use an empty string "".
+RULES:
+- Do NOT diagnose.
+- Do NOT classify.
+- Do NOT give advice.
+- Respond ONLY with a valid JSON object. No other text.
+- Explanations must be short, neutral, and evidence-based.
+- If no evidence exists, use an empty string "".
 
-    SIGNAL DEFINITIONS:
+SIGNAL DEFINITIONS:
 
-    sadness:
-    Persistent low mood, emptiness, despair, or emotional pain.
+sadness:
+Persistent low mood, emptiness, despair, or emotional pain.
 
-    anhedonia:
-    Loss of interest, enjoyment, motivation, or emotional engagement.
+anhedonia:
+Loss of interest, enjoyment, motivation, or emotional engagement.
 
-    fatigue:
-    Mental or physical exhaustion, burnout, reduced capacity to sustain effort.
+fatigue:
+Mental or physical exhaustion, burnout, reduced capacity to sustain effort.
 
-    hopelessness:
-    Pessimism, helplessness, lack of future orientation.
+hopelessness:
+Pessimism, helplessness, lack of future orientation.
 
-    isolation:
-    Social withdrawal, loneliness, or emotional distancing.
+isolation:
+Social withdrawal, loneliness, or emotional distancing.
 
-    SCORING GUIDELINES:
-    - 0.0 = no evidence
-    - 0.3 = weak or isolated hints
-    - 0.6 = clear and repeated signals
-    - 0.9 = strong and persistent signals
+SCORING GUIDELINES:
+- 0.0 = no evidence
+- 0.3 = weak or isolated hints
+- 0.6 = clear and repeated signals
+- 0.9 = strong and persistent signals
 
-    OUTPUT FORMAT (JSON ONLY):
+OUTPUT FORMAT (JSON ONLY, NO OTHER TEXT):
 
-    {{
+{{
     "signals": {{
         "sadness": 0.0,
         "anhedonia": 0.0,
@@ -68,13 +88,12 @@ def extract_signals(text: str) -> dict:
         "hopelessness": "",
         "isolation": ""
     }}
-    }}
+}}
 
-    TEXT TO ANALYZE:
-    {text}
-    """
+TEXT TO ANALYZE:
+{text}
 
-    raw = response.json()["response"]
+Remember: Respond with ONLY the JSON object above. No markdown, no code blocks, no explanations outside the JSON."""
 
     try:
         # Generate content with new SDK
@@ -117,7 +136,11 @@ def extract_signals(text: str) -> dict:
         print(f"Error calling Gemini API: {str(e)}")
         raise
 
+
 def classify_from_signals(signals: dict) -> dict:
+    """
+    Classify based on detected signals
+    """
     triggered = {
         k: v for k, v in signals.items()
         if v >= SIGNAL_THRESHOLDS[k]
@@ -140,17 +163,29 @@ def classify_from_signals(signals: dict) -> dict:
         "signals": triggered
     }
 
+
 def analyze_text(text: str) -> dict:
+    """
+    Main analysis function - extracts signals and classifies
+    """
     result = extract_signals(text)
-    signals = result["signals"]
+    all_signals = result["signals"]
     explanations = result["explanations"]
     
-    classification = classify_from_signals(signals)
+    classification = classify_from_signals(all_signals)
+    
+    # Add all signal scores and explanations to the result
+    classification["all_signals"] = all_signals
     classification["explanations"] = explanations
     
     return classification
 
 if __name__ == "__main__":
-    text = "I feel empty most days and I’m exhausted trying to keep up with classes."
-    result = analyze_text(text)
+    # Test the function
+    test_text = "I feel empty most days and I'm exhausted trying to keep up with classes."
+    print("Testing Gemini API with new google-genai SDK...")
+    print(f"Input: {test_text}\n")
+    
+    result = analyze_text(test_text)
+    print("Result:")
     print(json.dumps(result, indent=2))
