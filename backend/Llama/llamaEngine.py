@@ -1,5 +1,5 @@
 from .interface import analyze_text
-from Common.engineUtils import extract_text_from_file, generate_combined_pdf_report  # Import shared
+from ..Common.engineUtils import extract_text_from_file, generate_combined_pdf_report  # Import shared
 from groq import Groq
 from dotenv import load_dotenv
 import os

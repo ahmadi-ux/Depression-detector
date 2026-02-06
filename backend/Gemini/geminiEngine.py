@@ -3,7 +3,7 @@ import io
 from werkzeug.datastructures import FileStorage
 
 from .interface import analyze_text
-from Common.engineUtils import extract_text_from_file, generate_combined_pdf_report  # Import shared
+from ..Common.engineUtils import extract_text_from_file, generate_combined_pdf_report  # Import shared
 
 def run_gemini_job(file_payloads):
     combined_results = []
