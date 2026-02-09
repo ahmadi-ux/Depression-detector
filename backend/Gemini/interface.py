@@ -1,27 +1,10 @@
-<<<<<<< HEAD
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
-=======
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 from google import genai
 from google.genai import types
 import json
 import os
-<<<<<<< HEAD
-=======
-from dotenv import load_dotenv
-
-load_dotenv() 
-
-prompt_path = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "Common",
-    "prompt.txt"
-)
-with open(prompt_path, 'r', encoding='utf-8') as f:
-    prompt_template = f.read()
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 
 # Get API key from environment variable
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -49,7 +32,6 @@ def extract_signals(text: str) -> dict:
     """
     Use Gemini to analyze text for depression signals
     """
-<<<<<<< HEAD
     prompt = f"""
 You are a clinical-language research assistant.
 
@@ -111,10 +93,6 @@ TEXT TO ANALYZE:
 
 Remember: Respond with ONLY the JSON object above. No markdown, no code blocks, no explanations outside the JSON."""
 
-=======
-    prompt = prompt_template.format(text=text)
-    
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
     try:
         # Generate content with new SDK
         response = client.models.generate_content(

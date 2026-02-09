@@ -2,26 +2,11 @@ import json
 import os
 from dotenv import load_dotenv
 from groq import Groq
-<<<<<<< HEAD
-=======
-from pathlib import Path
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 
 from ..Common.Utils import classify_from_signals  # shared logic
 
 load_dotenv()
 
-<<<<<<< HEAD
-=======
-prompt_path = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "Common",
-    "prompt.txt"
-)
-with open(prompt_path, 'r', encoding='utf-8') as f:
-    prompt_template = f.read()
-
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 if not client.api_key:
     raise ValueError("GROQ_API_KEY environment variable is not set")
@@ -35,7 +20,6 @@ def extract_signals(text: str) -> dict:
     Returns raw signal scores + explanations (no classification here).
     """
 
-<<<<<<< HEAD
     prompt = f"""
 You are a clinical-language research assistant.
 
@@ -95,9 +79,6 @@ OUTPUT FORMAT (JSON ONLY):
 TEXT TO ANALYZE:
 {text}
 """
-=======
-    prompt = prompt_template.format(text=text)
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 
     response = client.chat.completions.create(
         model=GROQ_MODEL,
