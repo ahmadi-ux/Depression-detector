@@ -22,7 +22,7 @@ export default function DataUploadTxt() {
   const [selectedLLM, setSelectedLLM] = useState("Gemini");
 
   return (
-    <div className="h-auto flex flex-col items-center justify-center bg-blue-100 p-4 px-8 py-16">
+    <div className="h-auto flex flex-col items-center justify-center bg-yellow-100 p-4 px-8 py-16">
       <h2 className="text-5xl font-bold mb-4">Text Upload</h2>
       {/*<div className="w-full max-w-xl flex flex-col">*/}
 
