@@ -2,17 +2,12 @@ import json
 import os
 from dotenv import load_dotenv
 from groq import Groq
-<<<<<<< HEAD
-=======
 from pathlib import Path
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 
 from ..Common.Utils import classify_from_signals  # shared logic
 
 load_dotenv()
 
-<<<<<<< HEAD
-=======
 prompt_path = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "Common",
@@ -21,83 +16,19 @@ prompt_path = os.path.join(
 with open(prompt_path, 'r', encoding='utf-8') as f:
     prompt_template = f.read()
 
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 if not client.api_key:
     raise ValueError("GROQ_API_KEY environment variable is not set")
 
-GROQ_MODEL = "llama-3.1-8b-instant"
-
+GROQ_MODEL = "moonshotai/kimi-k2-instruct-0905"
 
 def extract_signals(text: str) -> dict:
     """
-    Use LLaMA (Groq) to analyze text for depression-related linguistic signals.
+    Use Kimi-k2 (Groq) to analyze text for depression-related linguistic signals.
     Returns raw signal scores + explanations (no classification here).
     """
 
-<<<<<<< HEAD
-    prompt = f"""
-You are a clinical-language research assistant.
-
-Your task is to analyze the text and estimate the presence of specific
-depression-related linguistic signals.
-
-RULES:
-- Do NOT diagnose.
-- Do NOT classify.
-- Do NOT give advice.
-- Respond ONLY with a valid JSON object. No other text.
-- Explanations must be short, neutral, and evidence-based.
-- If no evidence exists, use an empty string "".
-
-SIGNAL DEFINITIONS:
-
-sadness:
-Persistent low mood, emptiness, despair, or emotional pain.
-
-anhedonia:
-Loss of interest, enjoyment, motivation, or emotional engagement.
-
-fatigue:
-Mental or physical exhaustion, burnout, reduced capacity to sustain effort.
-
-hopelessness:
-Pessimism, helplessness, lack of future orientation.
-
-isolation:
-Social withdrawal, loneliness, or emotional distancing.
-
-SCORING GUIDELINES:
-- 0.0 = no evidence
-- 0.3 = weak or isolated hints
-- 0.6 = clear and repeated signals
-- 0.9 = strong and persistent signals
-
-OUTPUT FORMAT (JSON ONLY):
-
-{{
-  "signals": {{
-    "sadness": 0.0,
-    "anhedonia": 0.0,
-    "fatigue": 0.0,
-    "hopelessness": 0.0,
-    "isolation": 0.0
-  }},
-  "explanations": {{
-    "sadness": "",
-    "anhedonia": "",
-    "fatigue": "",
-    "hopelessness": "",
-    "isolation": ""
-  }}
-}}
-
-TEXT TO ANALYZE:
-{text}
-"""
-=======
     prompt = prompt_template.format(text=text)
->>>>>>> 5d254b0ec8528848b502320433929fdc69a64831
 
     response = client.chat.completions.create(
         model=GROQ_MODEL,
@@ -108,7 +39,7 @@ TEXT TO ANALYZE:
 
     raw = response.choices[0].message.content.strip()
 
-    # Defensive cleanup (LLaMA sometimes wraps JSON)
+    # Defensive cleanup (Kimi sometimes wraps JSON)
     if raw.startswith("```"):
         raw = raw.split("```")[1]
 
@@ -123,7 +54,7 @@ TEXT TO ANALYZE:
 def analyze_text(text: str) -> dict:
     """
     Full pipeline:
-    1. Extract signals via LLaMA
+    1. Extract signals via Kimi-k2 (Groq)
     2. Classify using shared rules
     3. Return merged result
     """
