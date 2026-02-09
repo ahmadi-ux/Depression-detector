@@ -1,44 +1,35 @@
 import { useForm } from "react-hook-form";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 import {
-  Form, FormControl, FormField, 
+  Form, FormControl, FormField,
   FormItem, FormLabel, FormMessage,
 } from "./ui/form";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 console.log("API_URL:", API_URL);
+
 /**
  * Depression Detector Form Component
- * - Upload file (PDF, CSV, TXT)
- * - Backend processes with llms
+ * - Text input via textarea
+ * - Backend processes with LLMs
  * - Returns PDF report for download
  */
-export default function ContactForm({ onSuccess, llm }) {
+export default function DepressionDetectorForm({ onSuccess, llm }) {
   const form = useForm({
     defaultValues: {
-      files: [],
+      text: "",
     },
   });
 
   const onSubmit = async (values) => {
     try {
-      if (!values.files || values.files.length === 0) {
-        alert("Please select at least one file");
-        return;
-      }
-
-      const files = values.files;
-      console.log(`Processing ${files.length} file(s)...`);
-
       const formData = new FormData();
-      formData.append("llm", llm);  // Add this
-      files.forEach((file) => {
-        formData.append("files", file);
-      });
+      formData.append("llm", llm);
+      formData.append("text", values.text);
 
       // Send to backend - returns immediately with job ID
-      console.log("Submitting file...");
+      console.log("Submitting text...");
       const uploadResponse = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
@@ -52,8 +43,6 @@ export default function ContactForm({ onSuccess, llm }) {
       const uploadData = await uploadResponse.json();
       const jobId = uploadData.job_id;
       console.log(`✓ Job started: ${jobId}`);
-      
-      // alert(`Processing started... Please wait.\nJob ID: ${jobId}`);
 
       // Poll for job completion
       let isComplete = false;
@@ -64,7 +53,6 @@ export default function ContactForm({ onSuccess, llm }) {
         // Wait 1 second before polling
         await new Promise(r => setTimeout(r, 1000));
         pollCount++;
-        console.log(`Polling attempt ${pollCount}`);
 
         try {
           console.log(`[Poll ${pollCount}] Checking status for job ${jobId.substring(0, 8)}...`);
@@ -81,7 +69,6 @@ export default function ContactForm({ onSuccess, llm }) {
             // Temporary error – keep polling
             throw new Error("Temporary polling error");
           }
-
 
           // Success response - could be PDF or JSON status
           const contentType = statusResponse.headers.get('content-type');
@@ -108,7 +95,7 @@ export default function ContactForm({ onSuccess, llm }) {
           }
         } catch (pollError) {
           console.error(`Poll error: ${pollError.message}`);
-            if (pollError.message.startsWith("Processing failed")) {
+          if (pollError.message.startsWith("Processing failed")) {
             throw pollError; // stop everything
           }
         }
@@ -118,7 +105,7 @@ export default function ContactForm({ onSuccess, llm }) {
         throw new Error('Processing timeout - took longer than 10 minutes');
       }
 
-      form.reset({ file: null });
+      form.reset({ text: "" });
       alert("✓ Report generated and downloaded successfully!");
       if (onSuccess) onSuccess();
     } catch (error) {
@@ -133,30 +120,37 @@ export default function ContactForm({ onSuccess, llm }) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
-            name="files"
-            rules={{ required: "Please select at least one file to analyze" }}
+            name="text"
+            rules={{
+              required: "Please enter text to analyze",
+              minLength: {
+                value: 10,
+                message: "Text must be at least 10 characters",
+              },
+            }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Upload Documents for Analysis</FormLabel>
+                <FormLabel>Text to Analyze</FormLabel>
                 <FormControl>
-                  <Input
-                    type="file"
-                    accept=".pdf,.csv,.txt"
-                    multiple
-                    onChange={(e) => field.onChange(Array.from(e.target.files))}
+                  <Textarea
+                    placeholder="Enter text for depression analysis... (e.g., journal entries, messages, etc.)"
+                    className="resize-none min-h-[200px]"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
                 <p className="text-sm text-gray-500 mt-2">
-                  Supported formats: PDF, CSV, TXT
+                  Minimum 10 characters required. The system will analyze linguistic signals related to depression.
                 </p>
               </FormItem>
             )}
           />
+
           <Button
             type="submit"
             className="w-full"
-            disabled={form.formState.isSubmitting}>
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Analyzing..." : "Analyze & Generate Report"}
           </Button>
         </form>

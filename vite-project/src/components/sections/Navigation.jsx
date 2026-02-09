@@ -60,7 +60,16 @@ export default function Navigation() {
               onClick={() => scrollToSection('DataUpload')}
               className={buttonClass}
             >
-              Data Upload
+              File Upload
+            </button>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <button
+              onClick={() => scrollToSection('DataUploadTxt')}
+              className={buttonClass}
+            >
+              Text Upload
             </button>
           </NavigationMenuItem>
         </NavigationMenuList>

@@ -1,10 +1,18 @@
-from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file
-
 from google import genai
 from google.genai import types
 import json
 import os
+from dotenv import load_dotenv
+
+load_dotenv() 
+
+prompt_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "Common",
+    "prompt.txt"
+)
+with open(prompt_path, 'r', encoding='utf-8') as f:
+    prompt_template = f.read()
 
 # Get API key from environment variable
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -32,67 +40,8 @@ def extract_signals(text: str) -> dict:
     """
     Use Gemini to analyze text for depression signals
     """
-    prompt = f"""
-You are a clinical-language research assistant.
-
-Your task is to analyze the text and estimate the presence of specific
-depression-related linguistic signals.
-
-RULES:
-- Do NOT diagnose.
-- Do NOT classify.
-- Do NOT give advice.
-- Respond ONLY with a valid JSON object. No other text.
-- Explanations must be short, neutral, and evidence-based.
-- If no evidence exists, use an empty string "".
-
-SIGNAL DEFINITIONS:
-
-sadness:
-Persistent low mood, emptiness, despair, or emotional pain.
-
-anhedonia:
-Loss of interest, enjoyment, motivation, or emotional engagement.
-
-fatigue:
-Mental or physical exhaustion, burnout, reduced capacity to sustain effort.
-
-hopelessness:
-Pessimism, helplessness, lack of future orientation.
-
-isolation:
-Social withdrawal, loneliness, or emotional distancing.
-
-SCORING GUIDELINES:
-- 0.0 = no evidence
-- 0.3 = weak or isolated hints
-- 0.6 = clear and repeated signals
-- 0.9 = strong and persistent signals
-
-OUTPUT FORMAT (JSON ONLY, NO OTHER TEXT):
-
-{{
-    "signals": {{
-        "sadness": 0.0,
-        "anhedonia": 0.0,
-        "fatigue": 0.0,
-        "hopelessness": 0.0,
-        "isolation": 0.0
-    }},
-    "explanations": {{
-        "sadness": "",
-        "anhedonia": "",
-        "fatigue": "",
-        "hopelessness": "",
-        "isolation": ""
-    }}
-}}
-
-TEXT TO ANALYZE:
-{text}
-
-Remember: Respond with ONLY the JSON object above. No markdown, no code blocks, no explanations outside the JSON."""
-
+    prompt = prompt_template.format(text=text)
+    
     try:
         # Generate content with new SDK
         response = client.models.generate_content(

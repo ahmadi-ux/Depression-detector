@@ -5,6 +5,7 @@ import ProjectDetails from './components/projectFolder/ProjectDetails'
 import DataUpload from './components/sections/DataUpload'
 import AdminLogin from './components/sections/AdminLogin'
 import AdminDashboard from './components/sections/AdminDashboard'
+import DataUploadTxt from './components/sections/DataUploadTxt'
 
 /** Main Application Component
  * - Sets up routing for different sections and pages
@@ -24,6 +25,9 @@ function App() {
             </div>
             <div id="DataUpload">
               <DataUpload />
+            </div>
+            <div id="DataUploadTxt">
+              <DataUploadTxt />
             </div>
 
             {/* <div id="experience">

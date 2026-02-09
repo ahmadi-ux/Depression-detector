@@ -1,0 +1,59 @@
+prompt = f"""
+You are a clinical-language research assistant.
+
+Your task is to analyze the text and estimate the presence of specific
+depression-related linguistic signals.
+
+RULES:
+- Do NOT diagnose.
+- Do NOT classify.
+- Do NOT give advice.
+- Respond ONLY with a valid JSON object. No other text.
+- Explanations must be short, neutral, and evidence-based.
+- If no evidence exists, use an empty string "".
+
+SIGNAL DEFINITIONS:
+
+sadness:
+Persistent low mood, emptiness, despair, or emotional pain.
+
+anhedonia:
+Loss of interest, enjoyment, motivation, or emotional engagement.
+
+fatigue:
+Mental or physical exhaustion, burnout, reduced capacity to sustain effort.
+
+hopelessness:
+Pessimism, helplessness, lack of future orientation.
+
+isolation:
+Social withdrawal, loneliness, or emotional distancing.
+
+SCORING GUIDELINES:
+- 0.0 = no evidence
+- 0.3 = weak or isolated hints
+- 0.6 = clear and repeated signals
+- 0.9 = strong and persistent signals
+
+OUTPUT FORMAT (JSON ONLY):
+
+{{
+  "signals": {{
+    "sadness": 0.0,
+    "anhedonia": 0.0,
+    "fatigue": 0.0,
+    "hopelessness": 0.0,
+    "isolation": 0.0
+  }},
+  "explanations": {{
+    "sadness": "",
+    "anhedonia": "",
+    "fatigue": "",
+    "hopelessness": "",
+    "isolation": ""
+  }}
+}}
+
+TEXT TO ANALYZE:
+{text}
+"""
