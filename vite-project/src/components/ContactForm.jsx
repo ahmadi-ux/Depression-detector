@@ -14,7 +14,7 @@ console.log("API_URL:", API_URL);
  * - Backend processes with llms
  * - Returns PDF report for download
  */
-export default function ContactForm({ onSuccess, llm }) {
+export default function ContactForm({ onSuccess, llm, prompt }) {
   const form = useForm({
     defaultValues: {
       files: [],
@@ -29,10 +29,11 @@ export default function ContactForm({ onSuccess, llm }) {
       }
 
       const files = values.files;
-      console.log(`Processing ${files.length} file(s)...`);
+      console.log(`Processing ${files.length} file(s) with ${prompt} prompt...`);
 
       const formData = new FormData();
-      formData.append("llm", llm);  // Add this
+      formData.append("llm", llm);
+      formData.append("prompt", prompt);  // Add prompt type
       files.forEach((file) => {
         formData.append("files", file);
       });

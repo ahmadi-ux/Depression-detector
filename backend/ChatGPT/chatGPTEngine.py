@@ -17,12 +17,12 @@ if not client.api_key:
 # You can choose different models here
 GROQ_MODEL = "openai/gpt-oss-120b"   
 
-def run_chatgpt_job(file_payloads):
+def run_chatgpt_job(file_payloads, prompt_type: str = "simple"):
     combined_results = []
     for payload in file_payloads:
         file = FileStorage(stream=io.BytesIO(payload["bytes"]), filename=payload["filename"])
         extracted_text = extract_text_from_file(file)
-        chatgpt_output = analyze_text(extracted_text)  # Use interface
+        chatgpt_output = analyze_text(extracted_text, prompt_type)  # Pass prompt_type
         combined_results.append({
             "filename": payload["filename"],
             "text": extracted_text,

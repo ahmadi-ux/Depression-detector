@@ -1,29 +1,25 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import io
+import json
+import logging
 from uuid import uuid4
 import threading
 from datetime import datetime
-from backend.Gemini.geminiEngine import run_gemini_job
-from backend.Llama.llamaEngine import run_llama_job 
-from backend.ChatGPT.chatGPTEngine import run_chatgpt_job
-from backend.Kimik2.KimiEngine import run_kimi_job as run_kimi_job
-from backend.Gwen.GwenEngine import run_qwen_job as run_gwen_job
-from backend.Compound.CompundEngine import run_compound_job as run_compound_job
+from backend.unified_engine import run_llm_job
+from backend.Common.prompts import get_prompt, get_available_prompts
+
+# Setup logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
 
 jobs = {}  # In-memory job store (use Redis/DB in prod)
-
-LLM_HANDLERS = {
-    "gemini": run_gemini_job,
-    "llama": run_llama_job,
-    "chatgpt": run_chatgpt_job,
-    "kimi": run_kimi_job,
-    "qwen": run_gwen_job,
-    "compound": run_compound_job
-}
 
 @app.route("/api/upload", methods=["POST"])
 def upload():
@@ -34,17 +30,38 @@ def upload():
     - files: List of files (multipart/form-data)
     - text: Direct text input (form field)
     - llm: LLM engine to use
+    - prompt: Prompt template type to use (simple, structured, feature_extraction, chain_of_thought, few_shot, free_form)
     """
+    logger.info(f"\n{'='*80}")
+    logger.info("UPLOAD ENDPOINT CALLED")
+    logger.info(f"{'='*80}")
+    
     llm_raw = request.form.get("llm")
     llm = llm_raw.lower() if llm_raw else None
     
+    prompt_type = request.form.get("prompt", "simple").lower()
+    
+    logger.info(f"LLM: {llm}, Prompt Type: {prompt_type}")
+    
+    # Define available LLMs
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound"]
+    
     # Validate LLM
-    if llm not in LLM_HANDLERS:
-        return jsonify({"error": f"Invalid LLM: {llm}"}), 400
+    if llm not in AVAILABLE_LLMS:
+        logger.error(f"Invalid LLM: {llm}")
+        return jsonify({"error": f"Invalid LLM: {llm}. Available: {AVAILABLE_LLMS}"}), 400
+    
+    # Validate prompt type
+    available_prompts = get_available_prompts()
+    if prompt_type not in available_prompts:
+        logger.error(f"Invalid prompt type: {prompt_type}")
+        return jsonify({"error": f"Invalid prompt type: {prompt_type}. Available: {available_prompts}"}), 400
     
     # Check for direct text input
     text_input = request.form.get("text")
     files = request.files.getlist("files")
+    
+    logger.info(f"Files count: {len(files)}, Has text input: {bool(text_input)}")
     
     # Determine input type and prepare payloads
     if text_input:
@@ -55,14 +72,17 @@ def upload():
             "is_text": True  # Flag to indicate this is direct text
         }]
         input_type = "text"
+        logger.info(f"Using direct text input ({len(text_input)} chars)")
         
     elif files and len(files) > 0:
         # File uploads
         file_payloads = [{"filename": f.filename, "bytes": f.read()} for f in files]
         input_type = "files"
+        logger.info(f"Using file uploads: {[p['filename'] for p in file_payloads]}")
         
     else:
         # No input provided
+        logger.error("No files or text provided")
         return jsonify({"error": "No files or text provided"}), 400
 
     # Create job
@@ -72,28 +92,43 @@ def upload():
         "progress": 0,
         "input_type": input_type,
         "filenames": [p["filename"] for p in file_payloads],
+        "llm": llm,
+        "prompt_type": prompt_type,
         "created_at": datetime.now().isoformat()
     }
+    
+    logger.info(f"Job created: {job_id}")
 
     # Start processing in background thread
-    thread = threading.Thread(target=process_job, args=(job_id, llm, file_payloads))
+    thread = threading.Thread(target=process_job, args=(job_id, llm, prompt_type, file_payloads))
     thread.daemon = True
     thread.start()
+    
+    logger.info(f"Background thread started for job {job_id}\n")
 
     return jsonify({"job_id": job_id, "status": "processing"}), 202
 
 
-def process_job(job_id, llm, file_payloads):
+def process_job(job_id, llm, prompt_type, file_payloads):
     """
     Process the job in background thread.
     Handles both file uploads and text input.
     """
     try:
+        logger.info(f"\n{'='*80}")
+        logger.info(f"PROCESSING JOB: {job_id}")
+        logger.info(f"LLM: {llm}, Prompt Type: {prompt_type}")
+        logger.info(f"Files: {len(file_payloads)}")
+        logger.info(f"{'='*80}\n")
+        
         # Update progress
         jobs[job_id]["progress"] = 10
         
-        # Call the appropriate LLM handler
-        pdf_bytes = LLM_HANDLERS[llm](file_payloads)
+        logger.info(f"[{job_id}] Calling unified LLM engine: {llm}")
+        # Call the unified engine with the selected LLM type
+        pdf_bytes = run_llm_job(llm, file_payloads, prompt_type)
+        
+        logger.info(f"[{job_id}] LLM handler completed. PDF size: {len(pdf_bytes)} bytes")
         
         # Store result
         jobs[job_id]["pdf"] = pdf_bytes
@@ -101,12 +136,19 @@ def process_job(job_id, llm, file_payloads):
         jobs[job_id]["completed_at"] = datetime.now().isoformat()
         jobs[job_id]["progress"] = 100
         
+        logger.info(f"[{job_id}] ✓ Job completed successfully")
+        logger.info(f"{'='*80}\n")
+        
     except Exception as e:
+        logger.error(f"[{job_id}] ❌ Job failed with error:")
+        logger.error(f"{type(e).__name__}: {str(e)}", exc_info=True)
+        
         # Handle errors
         jobs[job_id]["status"] = "error"
         jobs[job_id]["error"] = str(e)
         jobs[job_id]["failed_at"] = datetime.now().isoformat()
-        print(f"Job {job_id} failed: {str(e)}")
+        
+        logger.error(f"{'='*80}\n")
 
 
 @app.route("/api/job/<job_id>", methods=["GET"])
@@ -153,7 +195,8 @@ def home():
             "job_status": "/api/job/<job_id>"
         },
         "supported_inputs": ["files", "text"],
-        "supported_llms": list(LLM_HANDLERS.keys())
+        "supported_llms": list(LLM_HANDLERS.keys()),
+        "supported_prompts": get_available_prompts()
     })
 
 

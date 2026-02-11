@@ -17,12 +17,12 @@ if not client.api_key:
 # You can choose different models here
 GROQ_MODEL = "moonshotai/kimi-k2-instruct-0905"   
 
-def run_kimi_job(file_payloads):
+def run_kimi_job(file_payloads, prompt_type: str = "simple"):
     combined_results = []
     for payload in file_payloads:
         file = FileStorage(stream=io.BytesIO(payload["bytes"]), filename=payload["filename"])
         extracted_text = extract_text_from_file(file)
-        kimi_output = analyze_text(extracted_text)  # Use interface
+        kimi_output = analyze_text(extracted_text, prompt_type)  # Pass prompt_type
         combined_results.append({
             "filename": payload["filename"],
             "text": extracted_text,

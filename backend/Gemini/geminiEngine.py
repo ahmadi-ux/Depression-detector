@@ -5,12 +5,12 @@ from werkzeug.datastructures import FileStorage
 from .interface import analyze_text
 from ..Common.engineUtils import extract_text_from_file, generate_combined_pdf_report  # Import shared
 
-def run_gemini_job(file_payloads):
+def run_gemini_job(file_payloads, prompt_type: str = "simple"):
     combined_results = []
     for payload in file_payloads:
         file = FileStorage(stream=io.BytesIO(payload["bytes"]), filename=payload["filename"])
         extracted_text = extract_text_from_file(file)
-        gemini_output = analyze_text(extracted_text)  # Use interface
+        gemini_output = analyze_text(extracted_text, prompt_type)  # Pass prompt_type
         combined_results.append({
             "filename": payload["filename"],
             "text": extracted_text,
