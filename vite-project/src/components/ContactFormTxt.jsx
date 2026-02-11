@@ -15,7 +15,7 @@ console.log("API_URL:", API_URL);
  * - Backend processes with LLMs
  * - Returns PDF report for download
  */
-export default function DepressionDetectorForm({ onSuccess, llm }) {
+export default function DepressionDetectorForm({ onSuccess, llm, prompt }) {
   const form = useForm({
     defaultValues: {
       text: "",
@@ -26,6 +26,7 @@ export default function DepressionDetectorForm({ onSuccess, llm }) {
     try {
       const formData = new FormData();
       formData.append("llm", llm);
+      formData.append("prompt", prompt);
       formData.append("text", values.text);
 
       // Send to backend - returns immediately with job ID
@@ -134,7 +135,7 @@ export default function DepressionDetectorForm({ onSuccess, llm }) {
                 <FormControl>
                   <Textarea
                     placeholder="Enter text for depression analysis... (e.g., journal entries, messages, etc.)"
-                    className="resize-none min-h-[200px]"
+                    className="resize-none min-h-[100px]"
                     {...field}
                   />
                 </FormControl>
