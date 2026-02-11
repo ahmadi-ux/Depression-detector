@@ -12,12 +12,12 @@ logger = logging.getLogger(__name__)
 
 # Mapping of LLM names to their interface modules
 LLM_INTERFACES = {
-    "llama": "backend.Llama.interface",
-    "gemini": "backend.Gemini.interface",
-    "chatgpt": "backend.ChatGPT.interface",
-    "kimi": "backend.Kimik2.interface",
-    "qwen": "backend.Gwen.interface",
-    "compound": "backend.Compound.interface"
+    "llama": "backend.Interfaces.Llama",
+    "gemini": "backend.Interfaces.Gemini",
+    "chatgpt": "backend.Interfaces.ChatGPT",
+    "kimi": "backend.Interfaces.Kimi2",
+    "qwen": "backend.Interfaces.Qwen",
+    "compound": "backend.Interfaces.Compound"
 }
 
 # Display names for PDF reports
@@ -25,7 +25,7 @@ LLM_DISPLAY_NAMES = {
     "llama": "Llama",
     "gemini": "Gemini",
     "chatgpt": "ChatGPT",
-    "kimi": "Kimi",
+    "kimi": "Kimi2",
     "qwen": "Qwen",
     "compound": "Compound"
 }

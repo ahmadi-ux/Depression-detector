@@ -1,11 +1,18 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from dotenv import load_dotenv
 import io
 import json
 import logging
+import os
 from uuid import uuid4
 import threading
 from datetime import datetime
+
+# Load environment variables from .env file
+# Specify the path to ensure it loads from the project root
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+
 from backend.unified_engine import run_llm_job
 from backend.Common.prompts import get_prompt, get_available_prompts
 

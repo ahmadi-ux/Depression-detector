@@ -64,13 +64,18 @@ def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dic
     )
     
     raw_response = response.choices[0].message.content.strip()
-    logger.debug(f"Raw response (first 200 chars): {raw_response[:200]}...")
+    logger.info(f"{'='*80}")
+    logger.info(f"RAW RESPONSE FROM {model.upper()}")
+    logger.info(f"{'='*80}")
+    logger.info(f"Response length: {len(raw_response)} characters")
+    logger.info(f"Response content:\n{raw_response}")
+    logger.info(f"{'='*80}\n")
     
     try:
         data = clean_json_response(raw_response)
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON response: {e}")
-        logger.error(f"Raw response: {raw_response}")
+        logger.error(f"Raw response was: {repr(raw_response)}")
         raise ValueError(f"Invalid JSON from LLM: {e}")
     
     return {
