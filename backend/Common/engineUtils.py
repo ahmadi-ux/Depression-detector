@@ -1,9 +1,11 @@
 # common/engine_utils.py
 # Shared across all engines: file extraction, PDF generation
 
+
 import io
 import json
 import logging
+import os
 from datetime import datetime
 from PyPDF2 import PdfReader
 from reportlab.lib.pagesizes import letter
@@ -16,6 +18,7 @@ from werkzeug.datastructures import FileStorage
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 def extract_text_from_pdf(file):
     try:
         pdf_reader = PdfReader(file)
@@ -26,30 +29,25 @@ def extract_text_from_pdf(file):
     except Exception as e:
         raise ValueError(f"Error reading PDF: {str(e)}")
 
-def extract_text_from_csv(file):
+def extract_text_from_plain(file, filetype="TXT/CSV"):
     try:
         content = file.read().decode('utf-8', errors='replace')
         return content.strip()
     except Exception as e:
-        raise ValueError(f"Error reading CSV: {str(e)}")
-
-def extract_text_from_txt(file):
-    try:
-        content = file.read().decode('utf-8', errors='replace')
-        return content.strip()
-    except Exception as e:
-        raise ValueError(f"Error reading TXT: {str(e)}")
+        raise ValueError(f"Error reading {filetype}: {str(e)}")
 
 def extract_text_from_file(file):
     filename = file.filename.lower()
-    if filename.endswith('.pdf'):
-        return extract_text_from_pdf(file)
-    elif filename.endswith('.csv'):
-        return extract_text_from_csv(file)
-    elif filename.endswith('.txt'):
-        return extract_text_from_txt(file)
+    ext = os.path.splitext(filename)[1]
+    extractors = {
+        '.pdf': extract_text_from_pdf,
+        '.csv': lambda f: extract_text_from_plain(f, filetype="CSV"),
+        '.txt': lambda f: extract_text_from_plain(f, filetype="TXT"),
+    }
+    if ext in extractors:
+        return extractors[ext](file)
     else:
-        raise ValueError(f"Unsupported file type: {os.path.splitext(filename)[1]}")
+        raise ValueError(f"Unsupported file type: {ext}")
 
 def generate_combined_pdf_report(results, title_suffix="Analysis"):
     """
