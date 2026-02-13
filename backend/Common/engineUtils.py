@@ -60,6 +60,11 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
     
     pdf_buffer = io.BytesIO()
     doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+
+    # Set PDF metadata (title and author)
+    def set_pdf_metadata(canvas, doc):
+        canvas.setTitle(f"Depression Analysis Report ({title_suffix})")
+        canvas.setAuthor("Depression Detector System")
     styles = getSampleStyleSheet()
     elements = []
 
@@ -319,6 +324,6 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
     logger.info("PDF GENERATION COMPLETE")
     logger.info(f"{'='*80}\n")
     
-    doc.build(elements)
+    doc.build(elements, onFirstPage=set_pdf_metadata, onLaterPages=set_pdf_metadata)
     pdf_buffer.seek(0)
     return pdf_buffer
