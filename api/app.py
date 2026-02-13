@@ -24,7 +24,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+# Expose Content-Disposition header for downloads
+CORS(app, expose_headers=["Content-Disposition"])
 
 jobs = {}  # In-memory job store (use Redis/DB in prod)
 
@@ -134,15 +135,12 @@ def process_job(job_id, llm, prompt_type, file_payloads):
         logger.info(f"[{job_id}] Calling unified LLM engine: {llm}")
         # Call the unified engine with the selected LLM type
         pdf_bytes = run_llm_job(llm, file_payloads, prompt_type)
-        
         logger.info(f"[{job_id}] LLM handler completed. PDF size: {len(pdf_bytes)} bytes")
-        
         # Store result
         jobs[job_id]["pdf"] = pdf_bytes
         jobs[job_id]["status"] = "complete"
         jobs[job_id]["completed_at"] = datetime.now().isoformat()
         jobs[job_id]["progress"] = 100
-        
         logger.info(f"[{job_id}] ✓ Job completed successfully")
         logger.info(f"{'='*80}\n")
         
@@ -169,12 +167,17 @@ def get_job(job_id):
     job = jobs[job_id]
     
     if job["status"] == "complete":
-        # Return PDF for download
+        # Compose download filename: <original_filename>_<llm>_<jobid8>.pdf
+        filenames = job.get("filenames", [])
+        base_name = filenames[0].rsplit('.', 1)[0] if filenames else "report"
+        llm = job.get("llm", "LLM")
+        jobid8 = job_id[:8]
+        download_name = f"{base_name}_{llm}_{jobid8}.pdf"
         return send_file(
             io.BytesIO(job["pdf"]),
             mimetype="application/pdf",
             as_attachment=True,
-            download_name=f"{job_id[:16]}_report.pdf"
+            download_name=download_name
         )
     elif job["status"] == "error":
         # Return error details

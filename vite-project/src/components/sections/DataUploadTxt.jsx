@@ -108,7 +108,7 @@ export default function DataUploadTxt() {
               </ul>
             </div>
             
-            <ContactForm onSuccess={() => setOpen(false)} llm={selectedLLM} />
+            <ContactForm onSuccess={() => setOpen(false)} llm={selectedLLM} prompt={selectedPrompt} />
           </DialogContent>
         </Dialog>
       </div>
