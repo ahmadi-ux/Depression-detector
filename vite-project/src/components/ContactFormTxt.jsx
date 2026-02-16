@@ -10,12 +10,12 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 console.log("API_URL:", API_URL);
 
 /**
- * Depression Detector Form Component
+ * Contact Form Component
  * - Text input via textarea
  * - Backend processes with LLMs
  * - Returns PDF report for download
  */
-export default function DepressionDetectorForm({ onSuccess, llm, prompt }) {
+export default function ContactFormTxt({ onSuccess, llm, prompt }) {
   const form = useForm({
     defaultValues: {
       text: "",

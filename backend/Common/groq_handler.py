@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 from groq import Groq
 from .prompts import get_prompt
 
-load_dotenv()
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 logger = logging.getLogger(__name__)
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))

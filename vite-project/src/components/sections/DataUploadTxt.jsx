@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ContactForm from "../ContactFormTxt";
+import ContactFormTxt from "../ContactFormTxt";
 import { Button } from "../ui/button";
 import {
   Dialog, DialogContent, DialogDescription,
@@ -108,7 +108,7 @@ export default function DataUploadTxt() {
               </ul>
             </div>
             
-            <ContactForm onSuccess={() => setOpen(false)} llm={selectedLLM} prompt={selectedPrompt} />
+            <ContactFormTxt onSuccess={() => setOpen(false)} llm={selectedLLM} prompt={selectedPrompt} />
           </DialogContent>
         </Dialog>
       </div>

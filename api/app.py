@@ -9,9 +9,8 @@ from uuid import uuid4
 import threading
 from datetime import datetime
 
-# Load environment variables from .env file
-# Specify the path to ensure it loads from the project root
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+# Load environment variables from backend/Common/.env
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'backend', 'Common', '.env'))
 
 from backend.unified_engine import run_llm_job
 from backend.Common.prompts import get_prompt, get_available_prompts
