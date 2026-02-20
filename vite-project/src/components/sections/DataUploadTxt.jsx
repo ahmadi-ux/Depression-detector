@@ -68,7 +68,7 @@ export default function DataUploadTxt() {
                       Kimi
                   </DropdownMenuItem>
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Qwen")}>
-                      Qwen Doesn't Work 
+                      Qwen
                   </DropdownMenuItem>
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Compound")}>
                       Compound

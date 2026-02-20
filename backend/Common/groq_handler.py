@@ -24,20 +24,35 @@ def clean_json_response(raw_response: str) -> dict:
     Clean and parse JSON response from LLM.
     Handles cases where LLM wraps JSON in markdown code blocks.
     """
+    import re
     raw = raw_response.strip()
-    
     # Remove markdown code blocks if present
     if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        # Check if there's a language specifier (e.g., ```json)
+        raw = raw.split("```", 1)[1]
         if "\n" in raw:
             raw = raw.split("\n", 1)[1]
-    
-    # Remove trailing markdown block if present
     if raw.endswith("```"):
         raw = raw.rsplit("```", 1)[0]
-    
-    return json.loads(raw.strip())
+    # Try to extract first {...} block
+    match = re.search(r'\{.*\}', raw, re.DOTALL)
+    if match:
+        json_str = match.group(0)
+        try:
+            return json.loads(json_str)
+        except Exception as e:
+            # Try to fix common issues
+            json_str_fixed = json_str.replace("'", '"')
+            json_str_fixed = re.sub(r',\s*}', '}', json_str_fixed)
+            json_str_fixed = re.sub(r',\s*]', ']', json_str_fixed)
+            try:
+                return json.loads(json_str_fixed)
+            except Exception as e2:
+                pass
+    # Fallback to original logic
+    try:
+        return json.loads(raw.strip())
+    except Exception as e:
+        raise ValueError(f"Could not extract valid JSON from: {raw_response}\nError: {e}")
 
 
 def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dict:
