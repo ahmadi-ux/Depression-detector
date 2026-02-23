@@ -79,7 +79,9 @@ EXTRACT THE FOLLOWING FEATURES:
 9. Past-oriented statements (was, used to, before, remember)
 10. Present-oriented statements (is, now, currently, today)
 
-Respond ONLY with a valid JSON object in this exact format:
+Respond ONLY with a single valid JSON object in the exact format . 
+Do NOT include any extra text, explanation, or repeated keys.
+Do NOT wrap the JSON in markdown or any other formatting:
 {{
   "features": {{
     "first_person_singular": 0,
@@ -220,7 +222,12 @@ Respond ONLY with a valid JSON object in this exact format:
   "depression_likelihood": "Low|Medium|High",
   "confidence": 0-100,
   "clinical_notes": ""
-}}"""
+}}""",
+    "sentence": """Analyze this single sentence for depression indicators.
+Respond ONLY with a valid JSON object:
+{{"class": "depression" or "no-depression", "confidence": 0.0-1.0}}
+
+SENTENCE: {text}"""
 }
 
 
@@ -230,7 +237,8 @@ def get_prompt(prompt_type: str, text: str) -> str:
     
     Args:
         prompt_type: One of 'simple', 'structured', 'feature_extraction', 
-                    'chain_of_thought', 'few_shot', 'free_form'
+                    'chain_of_thought', 'few_shot', 'free_form', 
+                    'sentence_level_analysis', 'sentence'
         text: The text to analyze
         
     Returns:
@@ -247,4 +255,4 @@ def get_prompt(prompt_type: str, text: str) -> str:
 
 def get_available_prompts() -> list:
     """Get list of available prompt types."""
-    return list(PROMPTS.keys())
+    return list(PROMPTS.keys())   

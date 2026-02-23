@@ -7,6 +7,7 @@ import io
 import logging
 from werkzeug.datastructures import FileStorage
 from backend.Common.engineUtils import extract_text_from_file, generate_combined_pdf_report
+from backend.Common.sentence_analyzer import analyze_sentences
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +75,6 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
     llm_type = llm_type.lower()
     logger.info(f"Running job with LLM: {llm_type}, Prompt: {prompt_type}")
     
-    # Get the interface function for this LLM
-    analyze_text = get_llm_interface(llm_type)
-    
     combined_results = []
     for payload in file_payloads:
         logger.debug(f"Processing file: {payload['filename']}")
@@ -88,8 +86,23 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
         )
         extracted_text = extract_text_from_file(file)
         
-        # Analyze using the selected LLM
-        llm_output = analyze_text(extracted_text, prompt_type)
+        # Use sentence-by-sentence analysis if prompt_type is "sentence"
+        if prompt_type == "sentence":
+            # Get the model from the LLM interface
+            model_map = {
+                "llama": "llama-3.1-8b-instant",
+                "gemini": "gemma2-9b-it",
+                "chatgpt": "llama-3.3-70b-versatile",
+                "kimi": "llama-3.1-8b-instant",
+                "qwen": "qwen-qwq-32b",
+                "compound": "compound-beta"
+            }
+            model = model_map.get(llm_type, "llama-3.1-8b-instant")
+            llm_output = analyze_sentences(extracted_text, model, prompt_type)
+        else:
+            # Get the interface function for this LLM
+            analyze_text = get_llm_interface(llm_type)
+            llm_output = analyze_text(extracted_text, prompt_type)
         
         combined_results.append({
             "filename": payload["filename"],

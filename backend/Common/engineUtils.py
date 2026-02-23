@@ -139,6 +139,12 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
             label = actual_analysis.get('depression_likelihood', 'UNKNOWN')
             confidence = (actual_analysis.get('confidence', 0) / 100.0)
             logger.info(f"✓ Found 'free_form' structure: {label}")
+        elif 'sentence_analysis' in actual_analysis:
+            # Sentence-by-sentence format
+            pred = actual_analysis.get('prediction', {})
+            label = pred.get('class', 'UNKNOWN')
+            confidence = pred.get('confidence', 0.0)
+            logger.info(f"✓ Found 'sentence_analysis' structure: {label}")
         else:
             logger.warning(f"⚠ Unknown response structure. Keys: {actual_analysis.keys()}")
 
@@ -310,6 +316,65 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
             elements.append(Paragraph("Clinical Notes:", styles['Heading3']))
             elements.append(Paragraph(clinical_notes, styles['Normal']))
             logger.info("Found clinical notes")
+
+        # Extract sentence-by-sentence analysis data
+        if sentence_stats := actual_analysis.get("sentence_analysis"):
+            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Paragraph("Sentence-by-Sentence Analysis:", styles['Heading3']))
+            
+            total = sentence_stats.get("total_sentences", 0)
+            depressed = sentence_stats.get("depressed_sentences", 0)
+            not_depressed = sentence_stats.get("not_depressed_sentences", 0)
+            ratio = sentence_stats.get("depression_ratio", 0)
+            avg_conf = sentence_stats.get("avg_confidence", 0)
+            
+            elements.append(Paragraph(f"Total Sentences Analyzed: <b>{total}</b>", styles['Normal']))
+            elements.append(Paragraph(f"Depressed Sentences: <b>{depressed}</b>", styles['Normal']))
+            elements.append(Paragraph(f"Non-Depressed Sentences: <b>{not_depressed}</b>", styles['Normal']))
+            elements.append(Paragraph(f"Depression Ratio: <b>{ratio*100:.1f}%</b>", styles['Normal']))
+            elements.append(Paragraph(f"Average Confidence: <b>{avg_conf*100:.1f}%</b>", styles['Normal']))
+            logger.info(f"Found sentence analysis: {total} sentences, {depressed} depressed")
+
+        # Extract individual sentence results (show first 10 or depressed ones)
+        if sentences := actual_analysis.get("sentences"):
+            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Paragraph("Individual Sentence Results:", styles['Heading3']))
+            
+            # Show depressed sentences first
+            depressed_sentences = [s for s in sentences if s.get("class") == "depression"]
+            if depressed_sentences:
+                elements.append(Paragraph("<b>Depressed Sentences:</b>", styles['Normal']))
+                for sent in depressed_sentences[:10]:  # Limit to 10
+                    sent_text = sent.get("sentence", "")[:100]  # Truncate long sentences
+                    if len(sent.get("sentence", "")) > 100:
+                        sent_text += "..."
+                    conf = sent.get("confidence", 0) * 100
+                    elements.append(Paragraph(
+                        f"• [{conf:.0f}%] <i>\"{sent_text}\"</i>", 
+                        styles['Normal']
+                    ))
+                if len(depressed_sentences) > 10:
+                    elements.append(Paragraph(f"... and {len(depressed_sentences) - 10} more depressed sentences", styles['Normal']))
+            
+            # Show a few non-depressed for context
+            non_depressed = [s for s in sentences if s.get("class") == "no-depression"]
+            if non_depressed and len(non_depressed) <= 5:
+                elements.append(Spacer(1, 0.05 * inch))
+                elements.append(Paragraph("<b>Non-Depressed Sentences:</b>", styles['Normal']))
+                for sent in non_depressed:
+                    sent_text = sent.get("sentence", "")[:100]
+                    if len(sent.get("sentence", "")) > 100:
+                        sent_text += "..."
+                    conf = sent.get("confidence", 0) * 100
+                    elements.append(Paragraph(
+                        f"• [{conf:.0f}%] <i>\"{sent_text}\"</i>", 
+                        styles['Normal']
+                    ))
+            elif non_depressed:
+                elements.append(Spacer(1, 0.05 * inch))
+                elements.append(Paragraph(f"<b>Non-Depressed Sentences:</b> {len(non_depressed)} total (not shown)", styles['Normal']))
+            
+            logger.info(f"Found {len(sentences)} individual sentence results")
 
         elements.append(Spacer(1, 0.2 * inch))
         

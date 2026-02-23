@@ -23,9 +23,11 @@ def clean_json_response(raw_response: str) -> dict:
     """
     Clean and parse JSON response from LLM.
     Handles cases where LLM wraps JSON in markdown code blocks.
+    Extracts the first balanced JSON object/array.
     """
     import re
     raw = raw_response.strip()
+    
     # Remove markdown code blocks if present
     if raw.startswith("```"):
         raw = raw.split("```", 1)[1]
@@ -33,26 +35,108 @@ def clean_json_response(raw_response: str) -> dict:
             raw = raw.split("\n", 1)[1]
     if raw.endswith("```"):
         raw = raw.rsplit("```", 1)[0]
-    # Try to extract first {...} block
-    match = re.search(r'\{.*\}', raw, re.DOTALL)
-    if match:
-        json_str = match.group(0)
+    
+    raw = raw.strip()
+    
+    # Find the first { or [
+    start_idx = -1
+    start_char = None
+    for i, char in enumerate(raw):
+        if char == '{':
+            start_idx = i
+            start_char = '{'
+            break
+        elif char == '[':
+            start_idx = i
+            start_char = '['
+            break
+    
+    if start_idx == -1:
+        # No JSON found, try original logic
         try:
-            return json.loads(json_str)
+            return json.loads(raw.strip())
         except Exception as e:
-            # Try to fix common issues
-            json_str_fixed = json_str.replace("'", '"')
-            json_str_fixed = re.sub(r',\s*}', '}', json_str_fixed)
-            json_str_fixed = re.sub(r',\s*]', ']', json_str_fixed)
-            try:
-                return json.loads(json_str_fixed)
-            except Exception as e2:
-                pass
-    # Fallback to original logic
+            raise ValueError(f"Could not extract valid JSON from: {raw_response}\nError: {e}")
+    
+    # Extract from start_idx to the matching closing brace/bracket
+    json_str = extract_balanced_json(raw[start_idx:], start_char)
+    
+    if json_str:
+        # Clean up common JSON issues
+        json_str_fixed = json_str.replace("'", '"')
+        json_str_fixed = re.sub(r',\s*([}\]])', r'\1', json_str_fixed)
+        json_str_fixed = re.sub(r':\s*([}\]])', r': null\1', json_str_fixed)
+        
+        # Try to parse with duplicate key handling
+        try:
+            from collections import OrderedDict
+            def no_dup_object_pairs_hook(pairs):
+                d = OrderedDict()
+                for k, v in pairs:
+                    if k not in d:
+                        d[k] = v
+                return d
+            return json.loads(json_str_fixed, object_pairs_hook=no_dup_object_pairs_hook)
+        except Exception:
+            pass
+        
+        # Try normal parse
+        try:
+            return json.loads(json_str_fixed)
+        except Exception:
+            pass
+    
+    # Final fallback
     try:
         return json.loads(raw.strip())
     except Exception as e:
         raise ValueError(f"Could not extract valid JSON from: {raw_response}\nError: {e}")
+
+
+def extract_balanced_json(json_str: str, start_char: str) -> str:
+    """
+    Extract a balanced JSON object or array from a string.
+    
+    Args:
+        json_str: String starting with { or [
+        start_char: Opening character ('{' or '[')
+    
+    Returns:
+        Extracted JSON string with balanced braces/brackets
+    """
+    if not json_str or json_str[0] != start_char:
+        return ""
+    
+    end_char = '}' if start_char == '{' else ']'
+    depth = 0
+    in_string = False
+    escape_next = False
+    
+    for i, char in enumerate(json_str):
+        if escape_next:
+            escape_next = False
+            continue
+        
+        if char == '\\':
+            escape_next = True
+            continue
+        
+        if char == '"':
+            in_string = not in_string
+            continue
+        
+        if in_string:
+            continue
+        
+        if char == start_char:
+            depth += 1
+        elif char == end_char:
+            depth -= 1
+            if depth == 0:
+                return json_str[:i+1]
+    
+    # If we get here, the JSON is unbalanced, return what we have
+    return json_str
 
 
 def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dict:
