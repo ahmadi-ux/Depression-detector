@@ -3,8 +3,6 @@ import Navigation from './components/sections/Navigation'
 import Home from './components/sections/Home'
 import ProjectDetails from './components/projectFolder/ProjectDetails'
 import DataUpload from './components/sections/DataUpload'
-import AdminLogin from './components/sections/AdminLogin'
-import AdminDashboard from './components/sections/AdminDashboard'
 import DataUploadTxt from './components/sections/DataUploadTxt'
 
 /** Main Application Component
@@ -29,24 +27,8 @@ function App() {
             <div id="DataUploadTxt">
               <DataUploadTxt />
             </div>
-
-            {/* <div id="experience">
-              <Experience />
-            </div> */}
-            {/* <div id="skills">
-              <Skills />
-            </div> */}
-            {/* <div id="projects">
-              <Projects />
-            </div> */}
-            {/* <div id="aboutme">
-              <Aboutme />
-            </div> */}
           </>
         } />
-        <Route path="/projects/:id" element={<ProjectDetails />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
     </>
   )
