@@ -10,12 +10,12 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 console.log("API_URL:", API_URL);
 
 /**
- * Depression Detector Form Component
+ * Contact Form Component
  * - Text input via textarea
  * - Backend processes with LLMs
  * - Returns PDF report for download
  */
-export default function DepressionDetectorForm({ onSuccess, llm, prompt }) {
+export default function ContactFormTxt({ onSuccess, llm, prompt }) {
   const form = useForm({
     defaultValues: {
       text: "",
@@ -79,14 +79,22 @@ export default function DepressionDetectorForm({ onSuccess, llm, prompt }) {
             console.log("✓ PDF ready! Downloading...");
             const blob = await statusResponse.blob();
             const url = window.URL.createObjectURL(blob);
+            // Try to get filename from Content-Disposition header
+            let filename = "report.pdf";
+            const disposition = statusResponse.headers.get('content-disposition');
+            if (disposition && disposition.includes('filename=')) {
+              const match = disposition.match(/filename="?([^";]+)"?/);
+              if (match && match[1]) {
+                filename = match[1];
+              }
+            }
             const a = document.createElement('a');
             a.href = url;
-            a.download = `report_${jobId.substring(0, 8)}.pdf`;
+            a.download = `Depression_Report_${filename}`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
             isComplete = true;
             console.log("✓ Download complete!");
           } else {

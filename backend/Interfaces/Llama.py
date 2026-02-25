@@ -16,7 +16,15 @@ def analyze_text(text: str, prompt_type: str = "simple") -> dict:
     """
     Full pipeline: Extract signals via LLaMA and return result.
     """
-    return extract_signals(text, prompt_type)
+    # Post-process: Truncate at first closing brace after an opening brace
+    result = extract_signals(text, prompt_type)
+    # If the result is a string (raw), try to truncate at first valid JSON
+    if isinstance(result, str):
+        import re
+        match = re.search(r'\{.*?\}', result, re.DOTALL)
+        if match:
+            result = match.group(0)
+    return result
 
 
 if __name__ == "__main__":

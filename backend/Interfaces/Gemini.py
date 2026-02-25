@@ -10,7 +10,8 @@ from ..Common.prompts import get_prompt
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-load_dotenv() 
+# Always load .env from backend/Common/.env
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'Common', '.env'))
 
 # Get API key from environment variable
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")

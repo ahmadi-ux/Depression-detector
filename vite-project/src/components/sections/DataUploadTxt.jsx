@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ContactForm from "../ContactFormTxt";
+import ContactFormTxt from "../ContactFormTxt";
 import { Button } from "../ui/button";
 import {
   Dialog, DialogContent, DialogDescription,
@@ -21,6 +21,7 @@ const PROMPT_OPTIONS = [
   { value: "chain_of_thought", label: "Chain-of-Thought (Reasoning)" },
   { value: "few_shot", label: "Few-Shot (Example Based)" },
   { value: "free_form", label: "Free-Form (Narrative)" },
+  { value: "sentence", label: "Sentence-by-Sentence" }
 ];
 
 /** Data Upload Section with dialog form for uploading Text
@@ -68,7 +69,7 @@ export default function DataUploadTxt() {
                       Kimi
                   </DropdownMenuItem>
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Qwen")}>
-                      Qwen Doesn't Work 
+                      Qwen
                   </DropdownMenuItem>
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Compound")}>
                       Compound
@@ -105,10 +106,11 @@ export default function DataUploadTxt() {
                 <li><strong>Chain-of-Thought:</strong> Step-by-step reasoning process</li>
                 <li><strong>Few-Shot:</strong> Example-based assessment</li>
                 <li><strong>Free-Form:</strong> Clinical narrative analysis</li>
+                <li><strong>Sentence-by-Sentence:</strong> Splits text into sentences and analyzes each </li>
               </ul>
             </div>
             
-            <ContactForm onSuccess={() => setOpen(false)} llm={selectedLLM} />
+            <ContactFormTxt onSuccess={() => setOpen(false)} llm={selectedLLM} prompt={selectedPrompt} />
           </DialogContent>
         </Dialog>
       </div>
