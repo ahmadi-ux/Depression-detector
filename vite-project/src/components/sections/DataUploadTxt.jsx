@@ -21,6 +21,7 @@ const PROMPT_OPTIONS = [
   { value: "chain_of_thought", label: "Chain-of-Thought (Reasoning)" },
   { value: "few_shot", label: "Few-Shot (Example Based)" },
   { value: "free_form", label: "Free-Form (Narrative)" },
+  { value: "sentence", label: "Sentence-by-Sentence" }
 ];
 
 /** Data Upload Section with dialog form for uploading Text
@@ -105,6 +106,7 @@ export default function DataUploadTxt() {
                 <li><strong>Chain-of-Thought:</strong> Step-by-step reasoning process</li>
                 <li><strong>Few-Shot:</strong> Example-based assessment</li>
                 <li><strong>Free-Form:</strong> Clinical narrative analysis</li>
+                <li><strong>Sentence-by-Sentence:</strong> Splits text into sentences and analyzes each </li>
               </ul>
             </div>
             

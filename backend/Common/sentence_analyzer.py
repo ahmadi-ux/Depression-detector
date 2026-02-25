@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Sentence-by-sentence depression analysis.
 Splits text into sentences and analyzes each individually for more granular results.
