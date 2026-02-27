@@ -92,8 +92,8 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
             model_map = {
                 "llama": "llama-3.1-8b-instant",
                 "gemini": "gemma2-9b-it",
-                "chatgpt": "llama-3.3-70b-versatile",
-                "kimi": "llama-3.1-8b-instant",
+                "chatgpt": "openai/gpt-oss-120b",
+                "kimi": "moonshotai/kimi-k2-instruct-0905",
                 "qwen": "qwen-qwq-32b",
                 "compound": "compound-beta"
             }

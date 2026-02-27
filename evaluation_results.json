@@ -1,0 +1,2079 @@
+{
+  "timestamp": "2026-02-27T15:05:39.088831",
+  "total_models_tested": 1,
+  "results": [
+    {
+      "model": "llama-3.1-8b-instant",
+      "prompt_type": "chain_of_thought",
+      "total": 257,
+      "correct": 175,
+      "true_positives": 175,
+      "true_negatives": 0,
+      "false_positives": 82,
+      "false_negatives": 0,
+      "errors": 0,
+      "predictions": [
+        {
+          "text": "i would not feel hesitant in using the medical system again if needed",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i try to stuff my wildly feeling heart and messy insides safely and politely bac...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i just need to find ways to feel pretty",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i think the protection part is the part where i feel some has abused it more tha...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "im feeling mellow and am enjoying the cooler weather",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel let alone give a shit",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i break down and it leaves me feeling bitter",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i recently had a very ill and premature baby what can i do to feel less devastat...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "im sure it feels wonderful",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "before an exam which i",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i feel heartbroken and worried and i have a wicked headache",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel heartless in saying so though",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i have survived the low part of the crash im starting to feel hopeful again",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i begin to feel unpleasant about anime fandom in general",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i can brandish this article at anyone who makes fun of me for staying in bed too...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i know karen wouldnt see it that way if i addressed these things with her it wou...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel disrespected and insulted",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i realise that desiring a substance to feed a feeling only compounds the desire ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i prayed to trust god with my desire to feel a divine sense of home",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i felt like the boys were disadvantaged missing out on all the exciting entertai...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i feel the need to write even though i really have nothing important to say",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i have a large parcel of time or am feeling reluctant to write i set our kitchen...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i feel stress free heading into the holidays",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "im with her most of the time i feel perfectly content",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i have never met in real life but feel super bonded to through crisis pregnancie...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i am so proud of him and who he has become and i feel privileged to call him bro...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel like i m getting a milkshake and it has really helped me control my sweet...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel more happiness and are more peaceful",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i was feeling apprehensive about my journey because i would be using public tran...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i feel so pissed and i feel like sleeping s",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i can get to the bottom of this feeling and not just berate myself for feeling d...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i am so feeling so rich and yup i know i am so blessed",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i read the ny times i feel very inadequate",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i actually feel sorrowful",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i understand that but its so nice not to feel like the weird one",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel like i ve fucked up massively for not being able to fight off being suici...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel even more pressured to cook healthy meals and not eat out do thorough pre...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i am going to print this and refer to it as often as i can so that when i feel t...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "when my boyfriend last told me he loved me after i gave him an impulsive kiss",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i have been writing and playing too which feels quite wonderful",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i was feeling pressured but it looked awful to have my make up on and my dark wi...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel like there isnt any dirty oil left on my skin after using this to clog my...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i last saw him and already im feeling this agitated",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i just feel discouraged",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i don t feel particularly elegant though",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.3,
+          "correct": false
+        },
+        {
+          "text": "i know that i love what i do but struggle with feeling content and balanced",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel like we are pressured into being young beautiful thin and depending on th...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i cant explain how proud of him i am and the feeling of seeing him so determined...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i cant help but feeling a little hesitant about my decision just because of the ...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i said earlier our bodies have gotten used to the heat and the curiosity of what...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i don t feel like i m unsuccessful when i fail at reaching a goal in my freelanc...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i am happy to report that i was able to get miles in with minimal pain i just ic...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "ive reserved the right to feel all stubborn and powerless about it",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel valuable a href http idreamculture",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i just feel like being selfish and really live my life",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel shamed mentioning the fact that i owned a nokia",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i do feel resentful towards other bloggers writing for and against i don t even ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel like i have been beaten up and looking back on my week i can see why",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i just didn t end feeling satisfied",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i am not monitoring what i have to say about anything if you ever come across an...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel which is glamorous and my little lacy bottoms have a tiny g string undern...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel like i am really grouchy and some days i get in moods where i feel like i...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i were dating myself right now i d be telling my girlfriends that i feel ignored...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i put it aside feeling a little defeated",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i also feel paranoid that everyone is listening to my phone conversations whats ...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i am feeling brave and lucky kind of like my heart is breaking and im falling in...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i think that it is the one site that has truly made me hella smile and feel reas...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i will close my eyes and recite the following mantra every day and whenever i m ...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel we would be a far better species",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i love loving people and when i get the opportunity to really show how i feel i ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel pressured to talk to them",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i feel angry man named muaz",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.3,
+          "correct": true
+        },
+        {
+          "text": "im feeling pretty morose for reasons that i dont need to go into beyond having b...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im not much of a people watcher or a voyeur so i feel kinda weird when walking a...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i feel like i shouldn t be that amazed with a degree in biology i was blown away",
+          "category": "unknown",
+          "expected": "unknown",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i am so connected with families that are not my own and i love them so much and ...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel that many not all but many of the partners i work with are really talente...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i believe in you moment we all feel til then it s one more skeptical song",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i wonder if am i alone in the fact that i am able to identify my destructive beh...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i would save it for the next time im feeling cranky or irritable then spray some...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel too much but i don t care no i don t careeeeee i don t care by savage gar...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel so honored to have lindo guest starring on this post",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel privileged to call them my cousins",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i remembered that i gave my day to the holy spirit and filled with his grace how...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i began to shoot every person i made feel perfect",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "when my mums brother passed away after having been involved in a car accident he...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i was still feeling the effects of marathon sex julie looked amazing",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i have a hard time putting into words how good it feels to spend an hour serving...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "im feeling in my heart to make my list of things that i am thankful for",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i make myself show up and feel isolated in the crowd ill know i was wrong about ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel so strongly and passionate about so hearing that just made my heart sink",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i understand that you re feeling anxious",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.3,
+          "correct": false
+        },
+        {
+          "text": "i feel woefully inadequate lost and fearful he will do whatever needs to be done",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel so annoyed",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i once told my friends that i feel like doing some sort of backpacking but inste...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i always feel reassured after my appts",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i struggled with feelings of anger hurt and sadness yet i still felt hopeful",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel kinda popular",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i was wrong to feel overly optimistic about the crossfit workout",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i wonder if feeling complacent is a result of my laziness",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel like ending my life like some song from damaged or something",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel paranoid but atleast now i get some comfort with dd she is the only perso...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel like an emotional train wreck",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel like i can breath now and not be so rushed",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i don t believe these feelings can be blamed solely on the lack of empathy towar...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i mean my feelings are always sincere i just think part of me tends to repress c...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel the need to have one day a week for those polishes im not super jacked ab...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "im sat at work feeling pressure in my ears blowing my nose and just feeling mise...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel strange and weird about this entire struggle am i the only one who deals ...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel consistently dissatisfied disengaged disinterested and without any zest f...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i don t know if they just wanted to lead a race or they were feeling so well so ...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i must bring some perspective into the equation consider how you would feel if y...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i was feeling regretful that i made contact with someone with whom i need to kee...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i am also feeling his prompting to offer my comments about what exactly is going...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel agitated and jumpy and like i just ate a bottle of caffeine pills",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i included my feelings but no violent acts were committed against her",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i know i am feeling discouraged and cynical",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i even feel valuable as a person",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel the cool in their wings as they brush my face and walk across my outstret...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel relaxed energized and im breathing more fully without extra effort",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i know and i am eternally torned about it because i feel helpless and useless",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im feeling low and forgotten",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel kind of sorry for her",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "when it became clear that a man had used many people sexually and psychologicall...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i understand and appreciate the concern for safety i feel that the real focus of...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i think you said beautiful things to them and i think you meant them you loved b...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i might be afraid to leave the house to nurse in public to commit to a social en...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "im sure that each person has their own complex set of reasons for leaving and ch...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i dont know what i feel let me recount my emotional spectra all throughout those...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel curious to know more i think the procedure worked well",
+          "category": "unknown",
+          "expected": "unknown",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel more adventurous willing to take risks",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "im feeling stressed or out of control i regain control by breaking down my parti...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel worthless when hes not there to pick me up at the airport",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i really wanna see her soon but i feel really needy for asking her if i can see ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "ive listened enough to all you people and i just go back to my old ways by takin...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i still get my days were i seem to get more kicks than others but i feel so reas...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i do not feel frantic",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "im feeling kind of lonely right now even though i just talked to jack sarah and ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel super antisocial",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i get bored i get scared i feel ignored i feel happy i get silly i choke on my o...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "im feeling rather hostile over the whole hostel situation",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel if journalists then blamed me",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i fall off when my uncle hits so i cant imagine what it must feel like to go mph...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": false
+        },
+        {
+          "text": "i feel like people dont really want me in their company but also they dont want ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel like a dangerous animal as i prowl out of the jungle and onto the warm sa...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i was feeling pretty grumpy at this point but for whatever reason seeing this fl...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i have had since july st i am feeling shaken knowing i will be homeless in two m...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i just remember feeling frantic desperately trying to say what i needed to say t...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel like i should go to the supermarket and buy something totally delicious f...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i have been starting to feel drained",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i don t know i ve not tried a new character yet the universe feels much more liv...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i feel respected and i feel like i am worth something",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.9,
+          "correct": false
+        },
+        {
+          "text": "i watched him run by i couldnt help but feel envious",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i should probably mention so that you aren t feeling left out that the lunch was...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": false
+        },
+        {
+          "text": "i feel awful and have had chills on and off day and night",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i was feeling restless when i stepped into the kitchen to whip up this crunchy s...",
+          "category": "unknown",
+          "expected": "no-depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": false
+        },
+        {
+          "text": "i was telling her about how i was feeling a bit homesick",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel like a horrible person a href http bryangregorylewis",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel it when i get hurt on little things",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i managed to put a stop to all the things i had been doing that left me feeling ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i also find that during those times when i feel victimized by his loss i dont fe...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel it is unfortunate that in the end my year old will hate her father unless...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel lonely a class post count link href http sporkgasm",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feeling so shitty today then",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "hearing about developments of sience in the west a lot better than china",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel like i missed that ship when it sailed",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i would not accept his love fully feeling of being damaged",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel that he is ungrateful for having an opportunity to breathe the air when s...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel lousy about how much i have to study",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel like as much as it was an unfortunate situation that i wasnt with my fath...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i wasn t motivated i was tired and my guilt was making me feel worthless",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i didnt use to feel embarrassed walking by people in it at the pool",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i didn t see how my going in the army and maybe going to vietnam would achieve a...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i don t like to feel embarrassed when my kids watch it",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "im excited and i want her to be proud to be homeschooled and not feel ashamed",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel listless most of the time nowadays",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i thought he was going to say no but he just put on what i call his smacked pupp...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i cant tell if the moments of shock that im not feeling are because im jaded or ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel embarrassed that im doing it because i think people like me insert libera...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i dont think thats what ill do because i feel its just really awkward",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i was running hard i was running fast and i feel like the last minutes i was pro...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i had a feeling she was doomed the moment i laid eyes on her i still thought tha...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i don t feel too gloomy or melancholic or something",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i commented trying to keep my voice reasonably free from the feelings which grip...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i hurtled through the first chapters desperate to see what was so good about it ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel so dumb for being honest",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel like such a lame person but sigh i just don t know what to do i m so damn...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i can cry and feel bad without an explanation at all",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i just feel very dull right now",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel a bit melancholy when i think about not teaching the children i don t yet...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel useless i feel stupid",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i am feeling lost for not being on a regimented strength program",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i don t feel too troubled over work anymore getting used to the movement of the ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i kind of wish i had come up with those thoughts myself rather than feeling the ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i can t say it s made me feel any less depressed anxious but mingled in with the...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i don t feel like i was deprived by not being able to",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel a bit foolish even bothering to post anything on fridays",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel if it aint broke why fix it",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "im feeling mentally burdened with many things to get done",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i have no idea why i was feeling so lethargic yesterday probably because i got a...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel dismayed i feel like everything i thought was true was a lie but one thin...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel listless and things have been rather strained around here lately",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel bad for the creature",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.3,
+          "correct": true
+        },
+        {
+          "text": "i do when i feel lethargic",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i know first hand and all too well those feelings of pain hurt embarrassment and...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel slightly embarrassed that i keep telling myself and trying to make myself...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel gloomy and down",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i found it really sad here are people feeling unhappy because the expectations t...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i truly am i feel so disillusioned with the world after years of believing in he...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i get more upset when bruce is a little more tired from work than usual i feel a...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel utterly devastated that she must go through this and do so alone",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel as dirty as fuck",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im feeling a little groggy with a mild headache after a non wild and crazy eveni...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel very alone in part because everyone has there opinion of what is going on...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel damn lame hahahahahha",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im tired unhappy feeling listless unmotivated exhausted",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i know for a fact that happiness will forever be alien to me i still feel heartb...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i guess ill just feel awkward with him for a while till i get over shit",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel helpless lost upset and worst of all",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i feel pathetic to report that i know about as much korean after these three mon...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i upload today i know some of you are waiting for my bareminerals video but i ha...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i had moved to my own little flat in london and i was struggling to look after m...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im feeling too jaded and bitter to even bother to do a google search at this tim...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i am so jealous im always jealous when he has fun without me and i fucking hate ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im tired of feeling troubled stressed up feeling down and falling sick",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "after my boyfriend and i had separated",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i would feel ashamed or guilty if i were to take too much of the commons for mys...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im feeling awkward every time i start a photoshoot",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel sorry for those that can t eat mangoes amp grateful i can",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im inclined to think his feeling disturbed is at least partly due to the manifes...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i have paused on purpose that i must step back and recognize why im walking arou...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel isolated and alone in my trade",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i walked away from the weekend feeling simply dirty like i had done something re...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i didn t expect reps to make me ache really especially as i often lift heavier f...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i then wonder if the girl does want to marry me and contemplate that feeling sli...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i expressed my concerns that jens mobility had really declined to the point that...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel like i was aching for the summer to come and now it is slipping away so f...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel empty inside iphone wallpaper mobile wallpaper to your wap folder img src...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel disappointed and want to tear up some paper and throw it across the room ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i have also learned it takes a lot of effort and positive thinking for me not to...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i want to learn something new when i m feeling dull",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i can choose to feel deprived or empowered",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i was feeling abused humiliated and insulted by a search that does not correspon...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i have a feeling that most of you have yet to hear about this tragic incident in...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.3,
+          "correct": true
+        },
+        {
+          "text": "i look at his sweet little face crying for his mama just wanting me to hold him ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i feel alan clay who is rather pathetic has a huge mass on the back of his neck ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i am tired of feeling unloved undesired unappreciated and unsupported",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i started this blog is because i was desperately lonely and i wanted someone to ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i do feel sad for myself for not wanting that and thoughts extend up to a point ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "ive just been told that i should feel more remorseful about the whole thing and ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i am feeling very lethargic although still trying to get to the gym today but al...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i hope she didnt get that feeling i didnt want to make her feel bad about bringi...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "i had been feeling lousy but feeling a little more normal brought so many small ...",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "i tend to feel humiliated when criticized",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        },
+        {
+          "text": "im used to feeling empty that i dont know what happiness feels like",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.8,
+          "correct": true
+        },
+        {
+          "text": "ill feel less burdened and confused sighs",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.4,
+          "correct": true
+        },
+        {
+          "text": "i feel awful everytime ac",
+          "category": "unknown",
+          "expected": "depression",
+          "predicted": "depression",
+          "confidence": 0.6,
+          "correct": true
+        }
+      ],
+      "accuracy": 0.6809338521400778,
+      "precision": 0.6809338521400778,
+      "recall": 1.0,
+      "f1_score": 0.8101851851851852
+    }
+  ]
+}
