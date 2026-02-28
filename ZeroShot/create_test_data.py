@@ -54,7 +54,7 @@ def process_data(input_file, output_file, num_rows):
 
 # Example usage:
 if __name__ == "__main__":
-    process_data("ZeroShot/training_data.csv", "test1.csv", 150)
+    process_data("ZeroShot/training_data.csv", "test2.csv", 150)
 
     count = 0
     word_count = 0
