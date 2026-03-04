@@ -2,6 +2,9 @@ from datasets import load_dataset
 import requests
 from datetime import datetime
 import json
+import pandas as pd
+from datasets import concatenate_datasets
+from datasets import Dataset
 
 OLLAMA_URL = "http://localhost:11434"
 # Presets for Ollama call
@@ -11,15 +14,36 @@ TEMPERATURE = 0
 MODEL_NAME = "gpt-oss:20b"
 #llama3.1
 
-dataset = load_dataset(
-    "csv",
-    data_files={"test": "Dataset/test1.csv"},
-    delimiter=",", # no-op command can change or remove
-    keep_default_na=False,
-    token= None,
-)
+#uniform mapping
+# labels = label, 0 is depressed, all others are not-depressed
+# text = text
 
-dataset_rand = dataset["test"].shuffle(seed=42)
+# Load your CSV
+emoDep = pd.read_json('Dataset/combined.json', lines=True)
+emoDep = emoDep.rename(columns={"label_id": "label"}) #change column name to label
+emoDep['label'] = 0 # Change all values in the 'label_id' column to 0 (depressed)
+emoDep = emoDep.rename(columns={"text": "text"}) #no-op command can change
+
+csv_file1 = pd.read_csv('Dataset/training_data.csv')
+csv_file1 = csv_file1.rename(columns={"class": "label"}) #change column name to label
+csv_file1 = csv_file1.rename(columns={"text": "text"}) #no-op command can change
+#remove rows with label value 0 or 4. 0 = depressed, 4 = anxiety
+#Also filter out low-confidence samples to improve data quality
+csv_file1 = csv_file1[~csv_file1["label"].isin([0, 4])]
+csv_file1 = csv_file1[csv_file1["judgment_confidence"] >= .80]
+
+#combine datasets by shared columns (text and label)
+common_columns = ["text", "label"]
+emoDep = emoDep[common_columns]
+csv_file1 = csv_file1[common_columns]
+
+#combine datasets and create test split
+dataset_csv1 = Dataset.from_pandas(csv_file1)
+dataset_depEmo = Dataset.from_pandas(emoDep)
+combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo])
+split_dataset = combined_dataset.train_test_split(test_size=0.01, seed=42) #remember seed so we can pull out training data.
+test_data = split_dataset["test"]
+
 
 def ollama_response_to_string(input_response):
     output = ""
@@ -66,7 +90,7 @@ total_ran = 0
 ERROR = 0
 results_arr= []
 
-for each in dataset_rand:
+for each in test_data:
     prompt = f"""Classify whether the following text indicates depression. 
     Respond with exactly 'depressed' or 'not-depressed'.\n\nTEXT:\n{each["text"]}\n\nLABEL:"""
 
@@ -76,23 +100,23 @@ for each in dataset_rand:
         continue
     response = ollama_response_to_string(response)
 
-    # dataset uses 'class' column for labels (0 indicates depressed)
-    if each["class"] == 0 and response.strip() == "depressed":
+    # dataset uses 'label' column (0 indicates depressed)
+    if each["label"] == 0 and response.strip() == "depressed":
         TP += 1
         total_ran += 1
         print("Successfully predicted depressed for text: " + each["text"] + "\nResponse: " + response)
     
-    elif each["class"] != 0 and response.strip() == "depressed":
+    elif each["label"] != 0 and response.strip() == "depressed":
         FP += 1
         total_ran += 1
         print("Incorrectly predicted depressed for text: " + each["text"] + "\nResponse: " + response)
     
-    elif each["class"] != 0 and response.strip() == "not-depressed":
+    elif each["label"] != 0 and response.strip() == "not-depressed":
         TN += 1
         total_ran += 1
         print("Successfully predicted not-depressed for text: " + each["text"] + "\nResponse: " + response)
     
-    elif each["class"] == 0 and response.strip() == "not-depressed":
+    elif each["label"] == 0 and response.strip() == "not-depressed":
         FN += 1
         total_ran += 1
         print("Incorrectly predicted not-depressed for text: " + each["text"] + "\nResponse: " + response)
@@ -100,12 +124,12 @@ for each in dataset_rand:
     else:
         print("Received unexpected response: " + response.strip())
         ERROR += 1
-    print("Label = " + str(each["class"]))
-    print ("Total ran: " + str(total_ran) + "/" + str(len(dataset_rand)))
+    print("Label = " + str(each["label"]))
+    print ("Total ran: " + str(total_ran) + "/" + str(len(test_data)))
 
     result_str = (
         f"Text: {each['text']} | "
-        f"Label: {each['class']} | "
+        f"Label: {each['label']} | "
         f"Predicted: {response.strip()} | "
     )
     results_arr.append(result_str)
