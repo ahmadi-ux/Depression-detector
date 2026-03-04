@@ -7,7 +7,7 @@ import ollama
 OLLAMA_URL = "http://localhost:11434"
 # Presets for Ollama call
 REQUEST_TIMEOUT_SEC = 300
-NUM_PREDICT = 2200
+NUM_PREDICT = 2200    #Tokens max
 TEMPERATURE = 0
 MODEL_NAME = "gpt-oss:20b"
 #llama3.1
