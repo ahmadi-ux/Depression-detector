@@ -2,7 +2,6 @@ from datasets import load_dataset
 import requests
 from datetime import datetime
 import json
-import ollama
 
 OLLAMA_URL = "http://localhost:11434"
 # Presets for Ollama call
@@ -112,8 +111,14 @@ for each in dataset_rand:
     results_arr.append(result_str)
 
 
+percision = TP / (TP + FP)
+recall = TP / (TP + FN)
+f1_score = 2 * (percision * recall) / (percision + recall)
 
-results_arr.insert(0, "TP: " + str(TP) + " FP: " + str(FP) + " TN: " + str(TN) + " FN: " + str(FN) + " ERROR: " + str(ERROR))
+
+
+results_arr.insert(0, "TP: " + str(TP) + " FP: " + str(FP) + " TN: " + str(TN) + " FN: " + str(FN) + " ERROR: " + str(ERROR)
+                   + " Precision: " + str(percision) + " Recall: " + str(recall) + " F1 Score: " + str(f1_score))
 
 # Generate a datetime string for the filename
 dt_str = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -123,6 +128,10 @@ with open(results_filename, "w", encoding="utf-8") as f:
         f.write(line + "\n")
 
 
+print(f"Precision: {percision:.4f}")
+print(f"Recall: {recall:.4f}")
+print(f"F1 Score: {f1_score:.4f}")
+print("")
 print("TP:" + str(TP))
 print("FP:" + str(FP))
 print("TN:" + str(TN))
