@@ -18,7 +18,8 @@ LLM_INTERFACES = {
     "chatgpt": "backend.Interfaces.ChatGPT",
     "kimi": "backend.Interfaces.Kimi2",
     "qwen": "backend.Interfaces.Qwen",
-    "compound": "backend.Interfaces.Compound"
+    "compound": "backend.Interfaces.Compound",
+    "llamabig": "backend.Interfaces.LlamaBig"
 }
 
 # Display names for PDF reports
@@ -28,7 +29,8 @@ LLM_DISPLAY_NAMES = {
     "chatgpt": "ChatGPT",
     "kimi": "Kimi2",
     "qwen": "Qwen",
-    "compound": "Compound"
+    "compound": "Compound",
+    "llamabig": "LlamaBig"
 }
 
 
@@ -37,7 +39,7 @@ def get_llm_interface(llm_type: str):
     Dynamically import and return the analyze_text function for the specified LLM.
     
     Args:
-        llm_type: One of 'llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound'
+        llm_type: One of 'llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound', 'llamabig'
         
     Returns:
         The analyze_text function from the LLM's interface module
@@ -65,7 +67,7 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
     Universal job runner for any supported LLM.
     
     Args:
-        llm_type: The LLM to use ('llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound')
+        llm_type: The LLM to use ('llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound', 'llamabig')
         file_payloads: List of file payload dictionaries with 'bytes' and 'filename'
         prompt_type: The prompt template type to use (default: 'simple')
         
@@ -95,7 +97,8 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
                 "chatgpt": "openai/gpt-oss-120b",
                 "kimi": "moonshotai/kimi-k2-instruct-0905",
                 "qwen": "qwen-qwq-32b",
-                "compound": "compound-beta"
+                "compound": "compound-beta",
+                "llamabig": "llama-3.3-70b-versatile"
             }
             model = model_map.get(llm_type, "llama-3.1-8b-instant")
             llm_output = analyze_sentences(extracted_text, model, prompt_type)

@@ -36,11 +36,11 @@ def parse_csv_input(content: str, text_column: str = None, label_column: str = N
     Auto-detects text and label columns if not specified.
     
     Numeric label mapping (0-4 scale):
-    - 4: Anxiety
-    - 3: Anger
-    - 2: None
-    - 1: Happiness
-    - 0: Sadness
+    - 0 = depression
+    - 1 = no-depression (positive/healthy)
+    - 2 = neutral (skipped by default)
+    - 3 = depression (moderate)
+    - 4 = no-depression (uncertain/mixed)
     
     Args:
         content: CSV content as string

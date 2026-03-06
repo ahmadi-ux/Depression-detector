@@ -84,6 +84,9 @@ export default function DataUpload() {
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Compound")}>
                       Compound
                   </DropdownMenuItem>
+                  <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Llama Big")}>
+                      Llama Big
+                  </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 

@@ -20,10 +20,17 @@ HF_TOKEN = "" #PUT KEY TO ACCESS MODEL HERE
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import pandas as pd
 
+# align all labels to lowercase to avoid casing-driven metric errors
+LABEL_DEPRESSED = "depressed"
+LABEL_OTHER = "na"
+
+REQUIRED_COLUMNS = {"text", "label"}
+DATASET_PATH = "data_sets/depression_reddit_cleaned_ds.csv"
+
 def predict_label(text, model, tokenizer, max_new_tokens=8):
     prompt = (
         "Classify whether the following text indicates depression. "
-        "Respond with exactly 'depressed' or 'NA'.\n\n"
+        f"Respond with exactly '{LABEL_DEPRESSED}' or '{LABEL_OTHER}'.\n\n"
         "TEXT:\n" + text + "\n\nLABEL:"
     )
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512).to(model.device)
@@ -57,8 +64,9 @@ def run_inference(model, tokenizer, val_dataset):
             print(f"Processed {i + 1}/{len(val_dataset)}...")
 
     print("\n--- Classification Report ---")
-    labels = ["depressed", "na"]
+    labels = [LABEL_DEPRESSED, LABEL_OTHER]
     target_names = labels
+    report = classification_report(all_gold, all_preds, labels=labels, target_names=target_names, output_dict=True)
     print(classification_report(all_gold, all_preds, labels=labels, target_names=target_names))
     acc = accuracy_score(all_gold, all_preds)
     print(f"Overall Accuracy: {acc:.4f}")
@@ -134,24 +142,32 @@ if tokenizer.pad_token is None:
 print(f"[INFO] model loaded; dtype={model.dtype}")
 
 # load dataset from csv provided in repo
+if not os.path.exists(DATASET_PATH):
+    raise FileNotFoundError(f"Dataset not found at {DATASET_PATH}")
+
 dataset = load_dataset(
     "csv",
-    data_files={"train": "data_sets/depression_reddit_cleaned_ds.csv"},
+    data_files={"train": DATASET_PATH},
     delimiter=",",
     keep_default_na=False,
     token=HF_TOKEN or None,
 )
+
+missing = REQUIRED_COLUMNS - set(dataset["train"].column_names)
+if missing:
+    raise ValueError(f"Dataset missing required columns: {missing}")
+
 print(f"[INFO] dataset size = {len(dataset['train'])} samples")
 
-# label 0 -> "depressed" (note misspelling matches request)
-# label 1 -> "NA"
+# label 0 -> depressed
+# label 1 -> na
 def label_to_target(label):
     try:
         l = int(label)
     except Exception:
         # fallback in case of weird values
         l = 0
-    return "depressed" if l == 0 else "NA"
+    return LABEL_DEPRESSED if l == 0 else LABEL_OTHER
 
 # create train/val split (90% train, 10% test)
 split = dataset["train"].train_test_split(test_size=0.1, seed=42)
@@ -174,7 +190,7 @@ class DepressDataset(torch.utils.data.Dataset):
 
         prompt = (
             "Classify whether the following text indicates depression. "
-            "Respond with exactly 'depressed' or 'NA'.\n\n"
+            f"Respond with exactly '{LABEL_DEPRESSED}' or '{LABEL_OTHER}'.\n\n"
             "TEXT:\n" + text + "\n\nLABEL:"
         )
         full = f"{prompt} {tgt}{self.tok.eos_token}"
