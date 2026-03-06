@@ -37,8 +37,11 @@ dist/
 .vscode/
 *.swp
 *.swo
-model_tuning/testing_scripts/data_sets/
 *~
+
+# model testing
+model_tuning/testing_scripts/results/
+model_tuning/testing_scripts/data_sets/
 
 # OS
 .DS_Store

@@ -5,6 +5,7 @@ import json
 import pandas as pd
 from datasets import concatenate_datasets
 from datasets import Dataset
+import os
 
 OLLAMA_URL = "http://localhost:11434"
 # Presets for Ollama call
@@ -14,11 +15,11 @@ TEMPERATURE = 0
 MODEL_NAME = "llama3.1:8b"
 #llama3.1
 
+
+
 #uniform mapping
 # labels = label, 0 is depressed, all others are not-depressed
 # text = text
-
-# Load your CSV
 emoDep = pd.read_json('data_sets/combined.json', lines=True)
 emoDep = emoDep.rename(columns={"label_id": "label"}) #change column name to label
 emoDep['label'] = 0 # Change all values in the 'label_id' column to 0 (depressed)
@@ -58,7 +59,7 @@ dataset_RMHD_4 = Dataset.from_pandas(RMHD_4)
 
 #13,636 samples total, 6,315 depressed (label 0) and 7,321 not-depressed
 combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
-split_dataset = combined_dataset.train_test_split(test_size=.001, seed=42) #remember seed so we can pull out training data.
+split_dataset = combined_dataset.train_test_split(test_size=3, seed=42) #remember seed so we can pull out training data.
 test_data = split_dataset["test"]
 
 # Print count of entries with label 0 (depressed)
@@ -181,12 +182,23 @@ f1_score = 2 * (percision * recall) / (percision + recall)
 results_arr.insert(0, "TP: " + str(TP) + " FP: " + str(FP) + " TN: " + str(TN) + " FN: " + str(FN) + " ERROR: " + str(ERROR)
                    + " Precision: " + str(percision) + " Recall: " + str(recall) + " Accuracy: " + str(accuracy) + " F1 Score: " + str(f1_score) + " Model: " + MODEL_NAME)
 
+
+def make_safe_filename(value):
+    # For when model name has invalid naming char
+    invalid_chars = '<>:"/\\|?*'
+    safe = "".join("_" if c in invalid_chars else c for c in value)
+    return safe.strip(" .")
+
 # Generate a datetime string for the filename
-dt_str = datetime.now().strftime(f"MODEL_{MODEL_NAME}_%m%d_%H%M%S")
-results_filename = f"results_{dt_str}.txt"
-with open(results_filename, "w", encoding="utf-8") as f:
+safe_model_name = make_safe_filename(MODEL_NAME)
+dt_str = datetime.now().strftime(f"{safe_model_name}_%m%d_%H%M%S")
+results_folder = "results"
+results_path = os.path.join(results_folder, f"{dt_str}.txt")
+os.makedirs(results_folder, exist_ok=True)
+with open(results_path, "w", encoding="utf-8") as f:
     for line in results_arr:
         f.write(line + "\n")
+print(f"Saved results to: {results_path}")
 
 
 print(f"Precision: {percision:.4f}")
