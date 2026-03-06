@@ -19,12 +19,12 @@ MODEL_NAME = "llama3.1:8b"
 # text = text
 
 # Load your CSV
-emoDep = pd.read_json('Dataset/combined.json', lines=True)
+emoDep = pd.read_json('data_sets/combined.json', lines=True)
 emoDep = emoDep.rename(columns={"label_id": "label"}) #change column name to label
 emoDep['label'] = 0 # Change all values in the 'label_id' column to 0 (depressed)
 emoDep = emoDep.rename(columns={"text": "text"}) #no-op command can change
 
-csv_file1 = pd.read_csv('Dataset/training_data.csv')
+csv_file1 = pd.read_csv('data_sets/training_data.csv')
 csv_file1 = csv_file1.rename(columns={"class": "label"}) #change column name to label
 csv_file1 = csv_file1.rename(columns={"text": "text"}) #no-op command can change
 #remove rows with label value 0 or 4. 0 = depressed, 4 = anxiety
@@ -33,10 +33,10 @@ csv_file1 = csv_file1[~csv_file1["label"].isin([0, 4])]
 csv_file1 = csv_file1[csv_file1["judgment_confidence"] >= .80]
 
 
-RMHD_1 = pd.read_csv('Dataset/labelled_file1.csv')
-RMHD_2 = pd.read_csv('Dataset/labelled_file2.csv')
-RMHD_3 = pd.read_csv('Dataset/labelled_file3.csv')
-RMHD_4 = pd.read_csv('Dataset/labelled_file4.csv')
+RMHD_1 = pd.read_csv('data_sets/labelled_file1.csv')
+RMHD_2 = pd.read_csv('data_sets/labelled_file2.csv')
+RMHD_3 = pd.read_csv('data_sets/labelled_file3.csv')
+RMHD_4 = pd.read_csv('data_sets/labelled_file4.csv')
 RMHD_1['label'] = 0  # Change all values in the 'label' column to 0 (depressed)
 RMHD_2['label'] = 0
 RMHD_3['label'] = 0
