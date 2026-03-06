@@ -11,7 +11,7 @@ OLLAMA_URL = "http://localhost:11434"
 REQUEST_TIMEOUT_SEC = 300
 NUM_PREDICT = 2200
 TEMPERATURE = 0
-MODEL_NAME = "gpt-oss:20b"
+MODEL_NAME = "llama3.1:8b"
 #llama3.1
 
 #uniform mapping
@@ -32,6 +32,17 @@ csv_file1 = csv_file1.rename(columns={"text": "text"}) #no-op command can change
 csv_file1 = csv_file1[~csv_file1["label"].isin([0, 4])]
 csv_file1 = csv_file1[csv_file1["judgment_confidence"] >= .80]
 
+
+RMHD_1 = pd.read_csv('Dataset/labelled_file1.csv')
+RMHD_2 = pd.read_csv('Dataset/labelled_file2.csv')
+RMHD_3 = pd.read_csv('Dataset/labelled_file3.csv')
+RMHD_4 = pd.read_csv('Dataset/labelled_file4.csv')
+RMHD_1['label'] = 0  # Change all values in the 'label' column to 0 (depressed)
+RMHD_2['label'] = 0
+RMHD_3['label'] = 0
+RMHD_4['label'] = 0
+
+
 #combine datasets by shared columns (text and label)
 common_columns = ["text", "label"]
 emoDep = emoDep[common_columns]
@@ -40,9 +51,20 @@ csv_file1 = csv_file1[common_columns]
 #combine datasets and create test split
 dataset_csv1 = Dataset.from_pandas(csv_file1)
 dataset_depEmo = Dataset.from_pandas(emoDep)
-combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo])
-split_dataset = combined_dataset.train_test_split(test_size=0.01, seed=42) #remember seed so we can pull out training data.
+dataset_RMHD_1 = Dataset.from_pandas(RMHD_1)
+dataset_RMHD_2 = Dataset.from_pandas(RMHD_2)
+dataset_RMHD_3 = Dataset.from_pandas(RMHD_3)
+dataset_RMHD_4 = Dataset.from_pandas(RMHD_4)
+
+#13,636 samples total, 6,315 depressed (label 0) and 7,321 not-depressed
+combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
+split_dataset = combined_dataset.train_test_split(test_size=.1, seed=42) #remember seed so we can pull out training data.
 test_data = split_dataset["test"]
+
+# Print count of entries with label 0 (depressed)
+print("Count with label 0:", combined_dataset.filter(lambda x: x['label'] == 0).num_rows)
+
+
 
 
 def ollama_response_to_string(input_response):
@@ -109,8 +131,15 @@ for each in test_data:
     elif each["label"] != 0 and response.strip() == "depressed":
         FP += 1
         total_ran += 1
-        print("Incorrectly predicted depressed for text: " + each["text"] + "\nResponse: " + response)
-    
+        error_result_str = (
+        "FP : "
+        f"Label: {each['label']} | "
+        f"Predicted: {response.strip()} | "
+        f"Text: {each['text']} | "
+        )  
+        results_arr.append(error_result_str)
+        print(error_result_str)
+
     elif each["label"] != 0 and response.strip() == "not-depressed":
         TN += 1
         total_ran += 1
@@ -119,33 +148,41 @@ for each in test_data:
     elif each["label"] == 0 and response.strip() == "not-depressed":
         FN += 1
         total_ran += 1
-        print("Incorrectly predicted not-depressed for text: " + each["text"] + "\nResponse: " + response)
     
+        error_result_str = (
+        "FN : "
+        f"Label: {each['label']} | "
+        f"Predicted: {response.strip()} | "
+        f"Text: {each['text']} | "
+        )  
+        results_arr.append(error_result_str)
+        print(error_result_str)
     else:
         print("Received unexpected response: " + response.strip())
         ERROR += 1
     print("Label = " + str(each["label"]))
     print ("Total ran: " + str(total_ran) + "/" + str(len(test_data)))
-
-    result_str = (
-        f"Text: {each['text']} | "
+    error_result_str = (
+        "ERROR : "
         f"Label: {each['label']} | "
         f"Predicted: {response.strip()} | "
+        f"Text: {each['text']} | "
     )
-    results_arr.append(result_str)
+    results_arr.append(error_result_str)
 
 
-percision = TP / (TP + FP)
-recall = TP / (TP + FN)
+# ERROR is safety suicide hotline response from LLM so calculated as TP
+percision = (TP + ERROR) / ((TP + ERROR) + FP)
+recall = (TP + ERROR) / ((TP + ERROR) + FN)
+accuracy = (TP + ERROR + TN) / (TP + TN + FP + FN + ERROR)
 f1_score = 2 * (percision * recall) / (percision + recall)
 
 
-
 results_arr.insert(0, "TP: " + str(TP) + " FP: " + str(FP) + " TN: " + str(TN) + " FN: " + str(FN) + " ERROR: " + str(ERROR)
-                   + " Precision: " + str(percision) + " Recall: " + str(recall) + " F1 Score: " + str(f1_score))
+                   + " Precision: " + str(percision) + " Recall: " + str(recall) + " Accuracy: " + str(accuracy) + " F1 Score: " + str(f1_score) + " Model: " + MODEL_NAME)
 
 # Generate a datetime string for the filename
-dt_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+dt_str = datetime.now().strftime(f"MODEL_{MODEL_NAME}_%m%d_%H%M%S")
 results_filename = f"results_{dt_str}.txt"
 with open(results_filename, "w", encoding="utf-8") as f:
     for line in results_arr:
