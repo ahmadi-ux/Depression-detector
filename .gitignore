@@ -37,6 +37,7 @@ dist/
 .vscode/
 *.swp
 *.swo
+model_tuning/testing_scripts/data_sets/
 *~
 
 # OS
