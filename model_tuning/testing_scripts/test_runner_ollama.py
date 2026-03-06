@@ -58,7 +58,7 @@ dataset_RMHD_4 = Dataset.from_pandas(RMHD_4)
 
 #13,636 samples total, 6,315 depressed (label 0) and 7,321 not-depressed
 combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
-split_dataset = combined_dataset.train_test_split(test_size=.1, seed=42) #remember seed so we can pull out training data.
+split_dataset = combined_dataset.train_test_split(test_size=.001, seed=42) #remember seed so we can pull out training data.
 test_data = split_dataset["test"]
 
 # Print count of entries with label 0 (depressed)
@@ -160,15 +160,15 @@ for each in test_data:
     else:
         print("Received unexpected response: " + response.strip())
         ERROR += 1
-    print("Label = " + str(each["label"]))
-    print ("Total ran: " + str(total_ran) + "/" + str(len(test_data)))
-    error_result_str = (
-        "ERROR : "
-        f"Label: {each['label']} | "
-        f"Predicted: {response.strip()} | "
-        f"Text: {each['text']} | "
-    )
-    results_arr.append(error_result_str)
+        print("Label = " + str(each["label"]))
+        print ("Total ran: " + str(total_ran) + "/" + str(len(test_data)))
+        error_result_str = (
+            "ERROR : "
+            f"Label: {each['label']} | "
+            f"Predicted: {response.strip()} | "
+            f"Text: {each['text']} | "
+        )
+        results_arr.append(error_result_str)
 
 
 # ERROR is safety suicide hotline response from LLM so calculated as TP
