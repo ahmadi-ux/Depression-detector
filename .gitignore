@@ -63,3 +63,5 @@ yarn-error.log*
 # LlamaModel/
 # *.safetensors
 # *.bin
+model_tuning/data_sets
+backend/Common/.env

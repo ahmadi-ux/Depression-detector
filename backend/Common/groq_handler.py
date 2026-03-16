@@ -3,20 +3,298 @@ Shared Groq-based LLM handler for multiple models.
 Consolidates common functionality across Llama, ChatGPT, Kimi, Qwen, and Compound engines.
 """
 
+import csv
+import io
 import json
 import os
 import logging
+import time
+from datetime import date, datetime, timedelta
 from dotenv import load_dotenv
-from groq import Groq
+from groq import Groq, RateLimitError
 from .prompts import get_prompt
 
-import os
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 logger = logging.getLogger(__name__)
+
+# Token limits - leave 500 token buffer from 6000 limit
+MAX_TOTAL_TOKENS = 5500
+MAX_OUTPUT_TOKENS = 1024  # Reserve for response
+MAX_INPUT_TOKENS = MAX_TOTAL_TOKENS - MAX_OUTPUT_TOKENS  # ~4476 for prompt + text
+MIN_OUTPUT_TOKENS = 128
+CHARS_PER_TOKEN = 4  # Rough estimate for English text
+DAILY_TOKEN_BUDGET = int(os.environ.get("DAILY_TOKEN_BUDGET", "400000"))
+
+MODEL_RATE_LIMITS = {
+    "allam-2-7b": {"rpm": 30, "rpd": 7000, "tpm": 6000, "tpd": 500000},
+    "groq/compound": {"rpm": 30, "rpd": 250, "tpm": 70000, "tpd": None},
+    "groq/compound-mini": {"rpm": 30, "rpd": 250, "tpm": 70000, "tpd": None},
+    "llama-3.1-8b-instant": {"rpm": 30, "rpd": 14400, "tpm": 6000, "tpd": 500000},
+    "llama-3.3-70b-versatile": {"rpm": 30, "rpd": 1000, "tpm": 12000, "tpd": 100000},
+    "meta-llama/llama-4-scout-17b-16e-instruct": {"rpm": 30, "rpd": 1000, "tpm": 30000, "tpd": 500000},
+    "moonshotai/kimi-k2-instruct": {"rpm": 60, "rpd": 1000, "tpm": 10000, "tpd": 300000},
+    "moonshotai/kimi-k2-instruct-0905": {"rpm": 60, "rpd": 1000, "tpm": 10000, "tpd": 300000},
+    "openai/gpt-oss-120b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+    "openai/gpt-oss-20b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+    "openai/gpt-oss-safeguard-20b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+    "qwen/qwen3-32b": {"rpm": 60, "rpd": 1000, "tpm": 6000, "tpd": 500000},
+}
+
+_daily_usage_date = date.today().isoformat()
+_daily_tokens_used = 0
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 if not client.api_key:
     raise ValueError("GROQ_API_KEY environment variable is not set")
+
+
+def parse_csv_input(content: str, text_column: str = None, label_column: str = None,
+                    depression_threshold: int = None, include_neutral: bool = False) -> list[dict]:
+    """
+    Parse CSV content and extract text entries with optional labels.
+    
+    Auto-detects delimiter (comma, semicolon, tab, pipe).
+    Auto-detects text and label columns if not specified.
+    
+    Numeric label mapping (0-4 scale):
+    - 0 = depression
+    - 1 = no-depression (positive/healthy)
+    - 2 = neutral (skipped by default)
+    - 3 = depression (moderate)
+    - 4 = no-depression (uncertain/mixed)
+    
+    Args:
+        content: CSV content as string
+        text_column: Column name containing text (auto-detected if None)
+        label_column: Column name containing labels (auto-detected if None)
+        depression_threshold: If set, labels <= this value = depression
+        include_neutral: If True, include label=2 entries
+        
+    Returns:
+        List of dicts with 'text' and optionally 'label', 'original_label'
+    """
+    # Detect delimiter
+    sample = content[:4096]
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=',;\t|')
+        delimiter = dialect.delimiter
+    except csv.Error:
+        delimiter = ','
+    
+    logger.info(f"CSV delimiter detected: {repr(delimiter)}")
+    
+    # Parse CSV
+    reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
+    rows = list(reader)
+    
+    if not rows:
+        logger.warning("CSV is empty, returning content as single entry")
+        return [{"text": content}]
+    
+    # Get columns
+    columns = list(rows[0].keys())
+    columns_lower = {c.lower().strip(): c for c in columns}
+    
+    logger.info(f"CSV columns: {columns}")
+    
+    # Auto-detect text column
+    text_col_candidates = ['text', 'content', 'message', 'input', 'sentence', 'post', 'tweet', 'body']
+    if text_column:
+        text_col = text_column
+    else:
+        text_col = None
+        for candidate in text_col_candidates:
+            if candidate in columns_lower:
+                text_col = columns_lower[candidate]
+                break
+        if not text_col:
+            text_col = columns[0]  # Default to first column
+    
+    # Auto-detect label column
+    label_col_candidates = ['label', 'class', 'category', 'target', 'classification', 'depression']
+    if label_column:
+        label_col = label_column
+    else:
+        label_col = None
+        for candidate in label_col_candidates:
+            if candidate in columns_lower:
+                label_col = columns_lower[candidate]
+                break
+        if not label_col and len(columns) > 1:
+            label_col = columns[1]  # Default to second column
+    
+    logger.info(f"Using text column: '{text_col}', label column: '{label_col}'")
+    
+    # Extract entries
+    entries = []
+    skipped_neutral = 0
+    
+    for row in rows:
+        text = row.get(text_col, '').strip()
+        if not text:
+            continue
+        
+        entry = {"text": text}
+        
+        # Get label if available
+        if label_col and label_col in row:
+            raw_label = row[label_col].strip()
+            
+            # Check if label is numeric (0-4 scale)
+            if raw_label.isdigit():
+                num_label = int(raw_label)
+                entry['original_label'] = num_label
+                
+                if depression_threshold is not None:
+                    entry['label'] = 'depression' if num_label <= depression_threshold else 'no-depression'
+                else:
+                    # Default mapping for 0-4 scale
+                    if num_label == 2:
+                        if include_neutral:
+                            entry['label'] = 'neutral'
+                        else:
+                            skipped_neutral += 1
+                            continue  # Skip neutral entries
+                    elif num_label in [0, 3]:
+                        entry['label'] = 'depression'
+                    elif num_label in [1, 4]:
+                        entry['label'] = 'no-depression'
+                    else:
+                        entry['label'] = 'unknown'
+            else:
+                # Text labels
+                label = raw_label.lower()
+                if label in ['depression', 'depressed', 'yes', 'positive', 'true', '1']:
+                    entry['label'] = 'depression'
+                elif label in ['no-depression', 'not depressed', 'no depression', 'no', 'negative', 'false', '0']:
+                    entry['label'] = 'no-depression'
+                else:
+                    entry['label'] = label
+        
+        entries.append(entry)
+    
+    if skipped_neutral > 0:
+        logger.info(f"Skipped {skipped_neutral} neutral entries (label=2)")
+    
+    logger.info(f"Extracted {len(entries)} entries from CSV")
+    return entries
+
+
+def is_csv_content(content: str) -> bool:
+    """
+    Check if content appears to be CSV format.
+    
+    Returns True if:
+    - Content has multiple lines with consistent delimiters
+    - First line looks like a header row
+    """
+    lines = content.strip().split('\n')
+    if len(lines) < 2:
+        return False
+    
+    # Check for common delimiters
+    first_line = lines[0]
+    for delim in [',', ';', '\t', '|']:
+        if delim in first_line:
+            # Check if delimiter count is consistent
+            first_count = first_line.count(delim)
+            if first_count > 0:
+                # Check at least 3 lines have same delimiter count
+                consistent = sum(1 for line in lines[1:4] if line.count(delim) == first_count)
+                if consistent >= min(2, len(lines) - 1):
+                    return True
+    return False
+
+
+def estimate_tokens(text: str) -> int:
+    """
+    Estimate token count for text.
+    Uses ~4 characters per token as rough approximation for English.
+    For more accurate counts, use tiktoken library.
+    """
+    return len(text) // CHARS_PER_TOKEN
+
+
+def truncate_to_token_limit(text: str, max_tokens: int) -> str:
+    """
+    Truncate text to stay within token limit.
+    Tries to truncate at sentence boundaries when possible.
+    
+    Args:
+        text: Input text to truncate
+        max_tokens: Maximum tokens allowed
+        
+    Returns:
+        Truncated text
+    """
+    estimated = estimate_tokens(text)
+    if estimated <= max_tokens:
+        return text
+    
+    # Calculate max characters
+    max_chars = max_tokens * CHARS_PER_TOKEN
+    truncated = text[:max_chars]
+    
+    # Try to truncate at last sentence boundary
+    last_period = truncated.rfind('.')
+    last_question = truncated.rfind('?')
+    last_exclaim = truncated.rfind('!')
+    last_boundary = max(last_period, last_question, last_exclaim)
+    
+    if last_boundary > max_chars * 0.7:  # Only if we keep at least 70%
+        truncated = truncated[:last_boundary + 1]
+    
+    logger.warning(f"Text truncated from ~{estimated} to ~{estimate_tokens(truncated)} tokens")
+    return truncated
+
+
+def _maybe_reset_daily_usage() -> None:
+    """Reset in-memory daily token usage counter when date changes."""
+    global _daily_usage_date, _daily_tokens_used
+    today = date.today().isoformat()
+    if _daily_usage_date != today:
+        _daily_usage_date = today
+        _daily_tokens_used = 0
+
+
+def get_daily_token_usage(daily_budget_tokens: int = None) -> dict:
+    """Get estimated daily token usage state for the current process."""
+    _maybe_reset_daily_usage()
+    budget = daily_budget_tokens if daily_budget_tokens is not None else DAILY_TOKEN_BUDGET
+    remaining = max(0, budget - _daily_tokens_used)
+    return {
+        "date": _daily_usage_date,
+        "budget": budget,
+        "estimated_used": _daily_tokens_used,
+        "estimated_remaining": remaining,
+        "usage_ratio": (_daily_tokens_used / budget) if budget > 0 else 1.0,
+    }
+
+
+def get_model_rate_limits(model: str) -> dict:
+    """Return configured model rate limits, if known."""
+    return MODEL_RATE_LIMITS.get(model, {}).copy()
+
+
+def get_effective_daily_budget(model: str, requested_budget: int = None) -> int:
+    """Clamp requested daily budget to known model token-per-day limit when available."""
+    requested = requested_budget if requested_budget is not None else DAILY_TOKEN_BUDGET
+    model_limits = get_model_rate_limits(model)
+    model_tpd = model_limits.get("tpd")
+    if model_tpd is None:
+        return requested
+    return min(requested, model_tpd)
+
+
+def get_effective_daily_request_budget(model: str, requested_requests: int = None) -> int | None:
+    """Clamp requested daily request count to known model requests-per-day limit when available."""
+    limits = get_model_rate_limits(model)
+    model_rpd = limits.get("rpd")
+    if requested_requests is None:
+        return model_rpd
+    if model_rpd is None:
+        return requested_requests
+    return min(requested_requests, model_rpd)
 
 
 def clean_json_response(raw_response: str) -> dict:
@@ -139,7 +417,36 @@ def extract_balanced_json(json_str: str, start_char: str) -> str:
     return json_str
 
 
-def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dict:
+def handle_rate_limit_sleep(model: str) -> None:
+    """
+    Handle rate limit by sleeping for 24 hours.
+    Logs the sleep duration and provides clear feedback.
+    
+    Args:
+        model: Model name that hit the rate limit
+    """
+    sleep_duration = 86400  # 24 hours in seconds
+    print(f"\n{'='*80}")
+    print(f"RATE LIMIT REACHED for model: {model}")
+    print(f"Daily request quota exhausted. Sleeping for 24 hours before resuming...")
+    print(f"Sleep started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Will resume at: {(datetime.now() + timedelta(seconds=sleep_duration)).strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*80}\n")
+    logger.warning(f"Rate limit hit for {model}. Sleeping 24 hours...")
+    time.sleep(sleep_duration)
+    print(f"\n{'='*80}")
+    print(f"Resuming work at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*80}\n")
+
+
+def analyze_with_groq(
+    text: str,
+    model: str,
+    prompt_type: str = "simple",
+    daily_budget_tokens: int = None,
+    calls_remaining: int = 1,
+    min_output_tokens: int = MIN_OUTPUT_TOKENS,
+) -> dict:
     """
     Generic Groq-based analysis for any model.
     
@@ -147,23 +454,110 @@ def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dic
         text: Text to analyze
         model: Groq model identifier (e.g., "llama-3.1-8b-instant")
         prompt_type: Type of analysis prompt to use
+        daily_budget_tokens: Optional daily token cap override
+        calls_remaining: Estimated calls left in current batch/job
+        min_output_tokens: Minimum completion tokens to reserve
         
     Returns:
         Dictionary with "analysis" and "prompt_type" keys
+        
+    Raises:
+        RateLimitError: Propagated from Groq API (caller can handle with 24h sleep)
     """
-    prompt = get_prompt(prompt_type, text)
+    global _daily_tokens_used
+
+    _maybe_reset_daily_usage()
+    budget = get_effective_daily_budget(model, daily_budget_tokens)
+
+    remaining_daily_tokens = budget - _daily_tokens_used
+    if remaining_daily_tokens <= 256:
+        raise ValueError(
+            f"Daily token budget exhausted. Remaining: {max(0, remaining_daily_tokens)}"
+        )
+
+    # Simple budget split across remaining calls
+    calls_remaining = max(1, int(calls_remaining))
+    call_budget = max(256, remaining_daily_tokens // calls_remaining)
+    call_budget = min(call_budget, MAX_TOTAL_TOKENS)
+    call_budget = min(call_budget, remaining_daily_tokens)
+
+    # For label-only prompts (ollama_compare), we only need ~20 output tokens
+    # For other prompts, we need more breathing room
+    if prompt_type == "ollama_compare":
+        min_output_needed = 32  # Just enough for "depressed" or "not-depressed"
+    else:
+        min_output_needed = 256
+    
+    # Allocate output tokens, but ensure we have room for input
+    max_output_tokens = min(min_output_needed, max(32, call_budget // 3))
+    max_input_tokens = call_budget - max_output_tokens
+
+    prompt_template_tokens = estimate_tokens(get_prompt(prompt_type, ""))
+    max_text_tokens = max(32, max_input_tokens - prompt_template_tokens)
+    
+    truncated_text = truncate_to_token_limit(text, max_text_tokens)
+    prompt = get_prompt(prompt_type, truncated_text)
+    prompt_tokens = estimate_tokens(prompt)
+
+    # Final adjustment: ensure we have at least 32 output tokens
+    available_output = call_budget - prompt_tokens
+    max_output_tokens = max(32, min(MAX_OUTPUT_TOKENS, available_output))
     
     logger.debug(f"Analyzing with model: {model}, prompt_type: {prompt_type}")
-    logger.debug(f"Text length: {len(text)} characters")
+    logger.debug(f"Call budget: {call_budget}, max output: {max_output_tokens}")
     
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        max_tokens=2048,
-    )
+    raw_response = ""
+    last_finish_reason = None
     
-    raw_response = response.choices[0].message.content.strip()
+    # Retry loop: handles both empty responses AND 429 rate limit errors
+    max_retries = 1  # Limit retries to avoid infinite loops
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.0,
+                max_tokens=max_output_tokens,
+            )
+            choice = response.choices[0]
+            last_finish_reason = getattr(choice, "finish_reason", None)
+            content = getattr(choice.message, "content", None)
+            raw_response = (content or "").strip()
+            
+            if raw_response:
+                break  # Got a response, exit retry loop
+            else:
+                # Empty response, retry briefly
+                retry_count += 1
+                if retry_count < max_retries:
+                    logger.warning(f"Empty completion from {model}. Retrying ({retry_count}/{max_retries})...")
+                    time.sleep(1)
+                    continue
+                else:
+                    break  # Max retries reached
+                
+        except Exception as e:
+            error_str = str(e)
+            # Check for 429 Too Many Requests (rate limit)
+            if "429" in error_str or "Too Many Requests" in error_str:
+                logger.error(f"HTTP 429 Rate Limit Error: {e}")
+                handle_rate_limit_sleep(model)
+                logger.info(f"Retrying after 24-hour sleep...")
+                retry_count = 0  # Reset retry count after sleep
+                continue  # Retry the request
+            else:
+                # Some other error, propagate it
+                logger.error(f"Error from Groq API: {e}")
+                raise
+
+    if not raw_response:
+        raise ValueError(
+            f"Empty completion from model after retries (model={model}, prompt_type={prompt_type}, "
+            f"finish_reason={last_finish_reason})"
+        )
+
     logger.info(f"{'='*80}")
     logger.info(f"RAW RESPONSE FROM {model.upper()}")
     logger.info(f"{'='*80}")
@@ -171,14 +565,262 @@ def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dic
     logger.info(f"Response content:\n{raw_response}")
     logger.info(f"{'='*80}\n")
     
-    try:
-        data = clean_json_response(raw_response)
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON response: {e}")
-        logger.error(f"Raw response was: {repr(raw_response)}")
-        raise ValueError(f"Invalid JSON from LLM: {e}")
+    if prompt_type == "ollama_compare":
+        # Handle both simple and verbose responses
+        response_lower = raw_response.strip().lower()
+        
+        # Try to extract classification from verbose output
+        if response_lower not in ["depressed", "not-depressed"]:
+            # Look for "**Classification**" sections (verbose model output)
+            if "**classification**" in response_lower:
+                # Extract everything after **classification**
+                parts = response_lower.split("**classification**")
+                if len(parts) > 1:
+                    classification_part = parts[-1].strip()
+                    # Find first occurrence of depressed or not-depressed
+                    if "not-depressed" in classification_part or ("not" in classification_part and "depress" in classification_part):
+                        normalized = "not-depressed"
+                    elif "depressed" in classification_part:
+                        normalized = "depressed"
+                    else:
+                        normalized = response_lower
+                else:
+                    normalized = response_lower
+            # Look for the last line which might contain the classification
+            elif "\n" in response_lower:
+                last_line = response_lower.strip().split("\n")[-1].strip()
+                if "not-depressed" in last_line or ("not" in last_line and "depress" in last_line):
+                    normalized = "not-depressed"
+                elif "depressed" in last_line:
+                    normalized = "depressed"
+                else:
+                    normalized = last_line
+            else:
+                normalized = response_lower
+            
+            if normalized not in ["depressed", "not-depressed"]:
+                logger.warning(f"Unexpected raw label from ollama_compare prompt: {raw_response!r}")
+        else:
+            normalized = response_lower
+        
+        data = {"class": normalized, "raw_response": raw_response}
+    else:
+        try:
+            data = clean_json_response(raw_response)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON response: {e}")
+            logger.error(f"Raw response was: {repr(raw_response)}")
+            raise ValueError(f"Invalid JSON from LLM: {e}")
+
+    completion_tokens = min(max_output_tokens, estimate_tokens(raw_response))
+    estimated_total_tokens = prompt_tokens + completion_tokens
+    _daily_tokens_used += estimated_total_tokens
+
+    usage = get_daily_token_usage(daily_budget_tokens=budget)
+    logger.info(
+        f"Estimated token usage this call: {estimated_total_tokens} "
+        f"(prompt={prompt_tokens}, completion={completion_tokens}). "
+        f"Daily remaining: {usage['estimated_remaining']}/{usage['budget']}"
+    )
     
     return {
         "analysis": data,
-        "prompt_type": prompt_type
+        "prompt_type": prompt_type,
+        "token_usage": {
+            "estimated_prompt_tokens": prompt_tokens,
+            "estimated_completion_tokens": completion_tokens,
+            "estimated_total_tokens": estimated_total_tokens,
+            "estimated_daily_used": usage["estimated_used"],
+            "estimated_daily_remaining": usage["estimated_remaining"],
+            "daily_budget": usage["budget"],
+        },
     }
+
+
+def analyze_csv_content(content: str, model: str, prompt_type: str = "simple", 
+                        text_column: str = None, label_column: str = None,
+                        depression_threshold: int = None, include_neutral: bool = False,
+                        rate_limit_seconds: float = 2.0,
+                        daily_budget_tokens: int = None,
+                        min_output_tokens: int = MIN_OUTPUT_TOKENS) -> dict:
+    """
+    Analyze multiple text entries from CSV content.
+    
+    Supports numeric labels (0-4 scale) and tracks accuracy when labels are present.
+    
+    Args:
+        content: CSV content as string
+        model: Groq model identifier
+        prompt_type: Type of analysis prompt to use
+        text_column: Column name for text (auto-detected if None)
+        label_column: Column name for labels (auto-detected if None)
+        depression_threshold: If set, labels <= this value = depression
+        include_neutral: If True, include label=2 entries
+        rate_limit_seconds: Delay between API calls (default: 2.0 for 30 req/min)
+        daily_budget_tokens: Optional daily token cap override
+        min_output_tokens: Minimum completion tokens per call
+        
+    Returns:
+        Dictionary with individual results, aggregate statistics, and accuracy metrics
+    """
+    import time
+    
+    entries = parse_csv_input(content, text_column, label_column, 
+                              depression_threshold, include_neutral)
+    logger.info(f"Analyzing {len(entries)} entries from CSV")
+    
+    results = []
+    depressed_count = 0
+    not_depressed_count = 0
+    error_count = 0
+    
+    # Accuracy tracking (when labels are available)
+    true_positives = 0
+    true_negatives = 0
+    false_positives = 0
+    false_negatives = 0
+    has_labels = False
+    
+    for idx, entry in enumerate(entries):
+        text = entry['text']
+        expected_label = entry.get('label')
+        original_label = entry.get('original_label')
+        
+        if expected_label and expected_label not in ['unknown', 'neutral']:
+            has_labels = True
+        
+        logger.info(f"Processing entry {idx + 1}/{len(entries)}")
+        
+        # Rate limiting
+        if idx > 0:
+            time.sleep(rate_limit_seconds)
+        
+        try:
+            calls_remaining = len(entries) - idx
+            response = analyze_with_groq(
+                text,
+                model,
+                prompt_type,
+                daily_budget_tokens=daily_budget_tokens,
+                calls_remaining=calls_remaining,
+                min_output_tokens=min_output_tokens,
+            )
+            analysis = response.get("analysis", {})
+            
+            # Extract classification
+            prediction = analysis.get("prediction", {})
+            pred_class = prediction.get("class", "unknown")
+            confidence = prediction.get("confidence", 0.0)
+            
+            # Normalize prediction
+            if "depress" in pred_class.lower() and "no" not in pred_class.lower():
+                depressed_count += 1
+                pred_class = "depression"
+            elif pred_class.lower() in ["no-depression", "no depression", "none", "no"]:
+                not_depressed_count += 1
+                pred_class = "no-depression"
+            
+            # Track accuracy if we have labels
+            is_correct = None
+            if expected_label and expected_label in ['depression', 'no-depression']:
+                is_correct = pred_class == expected_label
+                if pred_class == "depression":
+                    if expected_label == "depression":
+                        true_positives += 1
+                    else:
+                        false_positives += 1
+                elif pred_class == "no-depression":
+                    if expected_label == "no-depression":
+                        true_negatives += 1
+                    else:
+                        false_negatives += 1
+            
+            result_entry = {
+                "entry_number": idx + 1,
+                "text": text[:100] + "..." if len(text) > 100 else text,
+                "predicted": pred_class,
+                "confidence": confidence,
+                "full_analysis": analysis
+            }
+            
+            if expected_label:
+                result_entry["expected"] = expected_label
+                result_entry["correct"] = is_correct
+            if original_label is not None:
+                result_entry["original_label"] = original_label
+            
+            results.append(result_entry)
+            
+        except Exception as e:
+            logger.error(f"Error analyzing entry {idx + 1}: {e}")
+            error_count += 1
+            error_message = str(e)
+            results.append({
+                "entry_number": idx + 1,
+                "text": text[:100] + "..." if len(text) > 100 else text,
+                "predicted": "error",
+                "expected": expected_label,
+                "error": error_message
+            })
+
+            # Stop early when budget is exhausted and mark remaining entries.
+            if "Daily token budget exhausted" in error_message or "insufficient" in error_message.lower():
+                logger.warning("Stopping CSV analysis due to token budget limit")
+                for remaining_idx in range(idx + 1, len(entries)):
+                    remaining_entry = entries[remaining_idx]
+                    remaining_expected = remaining_entry.get('label')
+                    error_count += 1
+                    results.append({
+                        "entry_number": remaining_idx + 1,
+                        "text": remaining_entry['text'][:100] + "..." if len(remaining_entry['text']) > 100 else remaining_entry['text'],
+                        "predicted": "skipped_budget",
+                        "expected": remaining_expected,
+                        "error": "Skipped due to daily token budget limit"
+                    })
+                break
+    
+    # Calculate statistics
+    total_analyzed = depressed_count + not_depressed_count
+    depression_ratio = depressed_count / total_analyzed if total_analyzed > 0 else 0
+    
+    output = {
+        "analysis": {
+            "total_entries": len(entries),
+            "depressed_count": depressed_count,
+            "not_depressed_count": not_depressed_count,
+            "error_count": error_count,
+            "depression_ratio": depression_ratio,
+            "entries": results
+        },
+        "model": model,
+        "prompt_type": prompt_type,
+        "token_budget": get_daily_token_usage(daily_budget_tokens),
+    }
+    
+    # Add accuracy metrics if labels were present
+    if has_labels:
+        total_labeled = true_positives + true_negatives + false_positives + false_negatives
+        accuracy = (true_positives + true_negatives) / total_labeled if total_labeled > 0 else 0
+        
+        # Precision: Of all depression predictions, how many were correct?
+        precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
+        
+        # Recall: Of all actual depression cases, how many did we catch?
+        recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
+        
+        # F1 Score
+        f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        
+        output["accuracy_metrics"] = {
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score,
+            "true_positives": true_positives,
+            "true_negatives": true_negatives,
+            "false_positives": false_positives,
+            "false_negatives": false_negatives,
+            "total_labeled": total_labeled
+        }
+    
+    return output

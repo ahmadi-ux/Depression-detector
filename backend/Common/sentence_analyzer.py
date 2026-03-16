@@ -9,9 +9,14 @@ Posted by D Greenberg, modified by community. License - CC BY-SA 4.0
 import re
 import json
 import logging
+import time
 from .groq_handler import analyze_with_groq
 
 logger = logging.getLogger(__name__)
+
+# Rate limiting: 30 requests per minute = 1 request every 2 seconds
+REQUESTS_PER_MINUTE = 30
+MIN_REQUEST_INTERVAL = 60.0 / REQUESTS_PER_MINUTE  # 2 seconds
 
 # Sentence splitting patterns
 alphabets = "([A-Za-z])"
@@ -54,7 +59,7 @@ def split_into_sentences(text: str) -> list[str]:
     text = re.sub(" " + suffixes + "[.]", " \\1<prd>", text)
     text = re.sub(" " + alphabets + "[.]", " \\1<prd>", text)
     if '"' in text:
-        text = text.replace("."", "".")
+        text = text.replace('.', ".")
     if "\"" in text:
         text = text.replace(".\"", "\".")
     if "!" in text:
@@ -91,6 +96,7 @@ def analyze_sentences(text: str, model: str, prompt_type: str = "sentence") -> d
     depressed_count = 0
     not_depressed_count = 0
     confidence_sum = 0.0
+    last_request_time = 0.0
     
     for idx, sentence in enumerate(sentences):
         if not sentence:
@@ -98,7 +104,15 @@ def analyze_sentences(text: str, model: str, prompt_type: str = "sentence") -> d
             
         logger.debug(f"Analyzing sentence {idx + 1}/{len(sentences)}")
         
+        # Rate limiting: ensure minimum interval between requests
+        elapsed = time.time() - last_request_time
+        if elapsed < MIN_REQUEST_INTERVAL and last_request_time > 0:
+            sleep_time = MIN_REQUEST_INTERVAL - elapsed
+            logger.debug(f"Rate limiting: sleeping {sleep_time:.2f}s")
+            time.sleep(sleep_time)
+        
         try:
+            last_request_time = time.time()
             analysis = analyze_with_groq(sentence, model, prompt_type)
             result = analysis.get("analysis", {})
             
