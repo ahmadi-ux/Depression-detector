@@ -8,11 +8,12 @@ import io
 import json
 import os
 import logging
+import time
+from datetime import date, datetime, timedelta
 from dotenv import load_dotenv
-from groq import Groq
+from groq import Groq, RateLimitError
 from .prompts import get_prompt
 
-import os
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,27 @@ logger = logging.getLogger(__name__)
 MAX_TOTAL_TOKENS = 5500
 MAX_OUTPUT_TOKENS = 1024  # Reserve for response
 MAX_INPUT_TOKENS = MAX_TOTAL_TOKENS - MAX_OUTPUT_TOKENS  # ~4476 for prompt + text
+MIN_OUTPUT_TOKENS = 128
 CHARS_PER_TOKEN = 4  # Rough estimate for English text
+DAILY_TOKEN_BUDGET = int(os.environ.get("DAILY_TOKEN_BUDGET", "400000"))
+
+MODEL_RATE_LIMITS = {
+    "allam-2-7b": {"rpm": 30, "rpd": 7000, "tpm": 6000, "tpd": 500000},
+    "groq/compound": {"rpm": 30, "rpd": 250, "tpm": 70000, "tpd": None},
+    "groq/compound-mini": {"rpm": 30, "rpd": 250, "tpm": 70000, "tpd": None},
+    "llama-3.1-8b-instant": {"rpm": 30, "rpd": 14400, "tpm": 6000, "tpd": 500000},
+    "llama-3.3-70b-versatile": {"rpm": 30, "rpd": 1000, "tpm": 12000, "tpd": 100000},
+    "meta-llama/llama-4-scout-17b-16e-instruct": {"rpm": 30, "rpd": 1000, "tpm": 30000, "tpd": 500000},
+    "moonshotai/kimi-k2-instruct": {"rpm": 60, "rpd": 1000, "tpm": 10000, "tpd": 300000},
+    "moonshotai/kimi-k2-instruct-0905": {"rpm": 60, "rpd": 1000, "tpm": 10000, "tpd": 300000},
+    "openai/gpt-oss-120b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+    "openai/gpt-oss-20b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+    "openai/gpt-oss-safeguard-20b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+    "qwen/qwen3-32b": {"rpm": 60, "rpd": 1000, "tpm": 6000, "tpd": 500000},
+}
+
+_daily_usage_date = date.today().isoformat()
+_daily_tokens_used = 0
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 if not client.api_key:
@@ -227,6 +248,55 @@ def truncate_to_token_limit(text: str, max_tokens: int) -> str:
     return truncated
 
 
+def _maybe_reset_daily_usage() -> None:
+    """Reset in-memory daily token usage counter when date changes."""
+    global _daily_usage_date, _daily_tokens_used
+    today = date.today().isoformat()
+    if _daily_usage_date != today:
+        _daily_usage_date = today
+        _daily_tokens_used = 0
+
+
+def get_daily_token_usage(daily_budget_tokens: int = None) -> dict:
+    """Get estimated daily token usage state for the current process."""
+    _maybe_reset_daily_usage()
+    budget = daily_budget_tokens if daily_budget_tokens is not None else DAILY_TOKEN_BUDGET
+    remaining = max(0, budget - _daily_tokens_used)
+    return {
+        "date": _daily_usage_date,
+        "budget": budget,
+        "estimated_used": _daily_tokens_used,
+        "estimated_remaining": remaining,
+        "usage_ratio": (_daily_tokens_used / budget) if budget > 0 else 1.0,
+    }
+
+
+def get_model_rate_limits(model: str) -> dict:
+    """Return configured model rate limits, if known."""
+    return MODEL_RATE_LIMITS.get(model, {}).copy()
+
+
+def get_effective_daily_budget(model: str, requested_budget: int = None) -> int:
+    """Clamp requested daily budget to known model token-per-day limit when available."""
+    requested = requested_budget if requested_budget is not None else DAILY_TOKEN_BUDGET
+    model_limits = get_model_rate_limits(model)
+    model_tpd = model_limits.get("tpd")
+    if model_tpd is None:
+        return requested
+    return min(requested, model_tpd)
+
+
+def get_effective_daily_request_budget(model: str, requested_requests: int = None) -> int | None:
+    """Clamp requested daily request count to known model requests-per-day limit when available."""
+    limits = get_model_rate_limits(model)
+    model_rpd = limits.get("rpd")
+    if requested_requests is None:
+        return model_rpd
+    if model_rpd is None:
+        return requested_requests
+    return min(requested_requests, model_rpd)
+
+
 def clean_json_response(raw_response: str) -> dict:
     """
     Clean and parse JSON response from LLM.
@@ -347,7 +417,36 @@ def extract_balanced_json(json_str: str, start_char: str) -> str:
     return json_str
 
 
-def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dict:
+def handle_rate_limit_sleep(model: str) -> None:
+    """
+    Handle rate limit by sleeping for 24 hours.
+    Logs the sleep duration and provides clear feedback.
+    
+    Args:
+        model: Model name that hit the rate limit
+    """
+    sleep_duration = 86400  # 24 hours in seconds
+    print(f"\n{'='*80}")
+    print(f"RATE LIMIT REACHED for model: {model}")
+    print(f"Daily request quota exhausted. Sleeping for 24 hours before resuming...")
+    print(f"Sleep started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Will resume at: {(datetime.now() + timedelta(seconds=sleep_duration)).strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*80}\n")
+    logger.warning(f"Rate limit hit for {model}. Sleeping 24 hours...")
+    time.sleep(sleep_duration)
+    print(f"\n{'='*80}")
+    print(f"Resuming work at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*80}\n")
+
+
+def analyze_with_groq(
+    text: str,
+    model: str,
+    prompt_type: str = "simple",
+    daily_budget_tokens: int = None,
+    calls_remaining: int = 1,
+    min_output_tokens: int = MIN_OUTPUT_TOKENS,
+) -> dict:
     """
     Generic Groq-based analysis for any model.
     
@@ -355,35 +454,110 @@ def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dic
         text: Text to analyze
         model: Groq model identifier (e.g., "llama-3.1-8b-instant")
         prompt_type: Type of analysis prompt to use
+        daily_budget_tokens: Optional daily token cap override
+        calls_remaining: Estimated calls left in current batch/job
+        min_output_tokens: Minimum completion tokens to reserve
         
     Returns:
         Dictionary with "analysis" and "prompt_type" keys
+        
+    Raises:
+        RateLimitError: Propagated from Groq API (caller can handle with 24h sleep)
     """
-    # Estimate prompt template size (without text) - roughly 500-1500 tokens depending on prompt type
-    prompt_template_tokens = 1500  # Conservative estimate for longest prompts
-    max_text_tokens = MAX_INPUT_TOKENS - prompt_template_tokens
+    global _daily_tokens_used
+
+    _maybe_reset_daily_usage()
+    budget = get_effective_daily_budget(model, daily_budget_tokens)
+
+    remaining_daily_tokens = budget - _daily_tokens_used
+    if remaining_daily_tokens <= 256:
+        raise ValueError(
+            f"Daily token budget exhausted. Remaining: {max(0, remaining_daily_tokens)}"
+        )
+
+    # Simple budget split across remaining calls
+    calls_remaining = max(1, int(calls_remaining))
+    call_budget = max(256, remaining_daily_tokens // calls_remaining)
+    call_budget = min(call_budget, MAX_TOTAL_TOKENS)
+    call_budget = min(call_budget, remaining_daily_tokens)
+
+    # For label-only prompts (ollama_compare), we only need ~20 output tokens
+    # For other prompts, we need more breathing room
+    if prompt_type == "ollama_compare":
+        min_output_needed = 32  # Just enough for "depressed" or "not-depressed"
+    else:
+        min_output_needed = 256
     
-    # Truncate text if needed
+    # Allocate output tokens, but ensure we have room for input
+    max_output_tokens = min(min_output_needed, max(32, call_budget // 3))
+    max_input_tokens = call_budget - max_output_tokens
+
+    prompt_template_tokens = estimate_tokens(get_prompt(prompt_type, ""))
+    max_text_tokens = max(32, max_input_tokens - prompt_template_tokens)
+    
     truncated_text = truncate_to_token_limit(text, max_text_tokens)
     prompt = get_prompt(prompt_type, truncated_text)
-    
-    # Final check on total prompt size
     prompt_tokens = estimate_tokens(prompt)
-    if prompt_tokens > MAX_INPUT_TOKENS:
-        logger.warning(f"Prompt still exceeds limit: ~{prompt_tokens} tokens")
+
+    # Final adjustment: ensure we have at least 32 output tokens
+    available_output = call_budget - prompt_tokens
+    max_output_tokens = max(32, min(MAX_OUTPUT_TOKENS, available_output))
     
     logger.debug(f"Analyzing with model: {model}, prompt_type: {prompt_type}")
-    logger.debug(f"Text length: {len(truncated_text)} chars (~{estimate_tokens(truncated_text)} tokens)")
-    logger.debug(f"Total prompt: ~{prompt_tokens} tokens, max output: {MAX_OUTPUT_TOKENS} tokens")
+    logger.debug(f"Call budget: {call_budget}, max output: {max_output_tokens}")
     
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        max_tokens=MAX_OUTPUT_TOKENS,
-    )
+    raw_response = ""
+    last_finish_reason = None
     
-    raw_response = response.choices[0].message.content.strip()
+    # Retry loop: handles both empty responses AND 429 rate limit errors
+    max_retries = 1  # Limit retries to avoid infinite loops
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.0,
+                max_tokens=max_output_tokens,
+            )
+            choice = response.choices[0]
+            last_finish_reason = getattr(choice, "finish_reason", None)
+            content = getattr(choice.message, "content", None)
+            raw_response = (content or "").strip()
+            
+            if raw_response:
+                break  # Got a response, exit retry loop
+            else:
+                # Empty response, retry briefly
+                retry_count += 1
+                if retry_count < max_retries:
+                    logger.warning(f"Empty completion from {model}. Retrying ({retry_count}/{max_retries})...")
+                    time.sleep(1)
+                    continue
+                else:
+                    break  # Max retries reached
+                
+        except Exception as e:
+            error_str = str(e)
+            # Check for 429 Too Many Requests (rate limit)
+            if "429" in error_str or "Too Many Requests" in error_str:
+                logger.error(f"HTTP 429 Rate Limit Error: {e}")
+                handle_rate_limit_sleep(model)
+                logger.info(f"Retrying after 24-hour sleep...")
+                retry_count = 0  # Reset retry count after sleep
+                continue  # Retry the request
+            else:
+                # Some other error, propagate it
+                logger.error(f"Error from Groq API: {e}")
+                raise
+
+    if not raw_response:
+        raise ValueError(
+            f"Empty completion from model after retries (model={model}, prompt_type={prompt_type}, "
+            f"finish_reason={last_finish_reason})"
+        )
+
     logger.info(f"{'='*80}")
     logger.info(f"RAW RESPONSE FROM {model.upper()}")
     logger.info(f"{'='*80}")
@@ -391,23 +565,84 @@ def analyze_with_groq(text: str, model: str, prompt_type: str = "simple") -> dic
     logger.info(f"Response content:\n{raw_response}")
     logger.info(f"{'='*80}\n")
     
-    try:
-        data = clean_json_response(raw_response)
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON response: {e}")
-        logger.error(f"Raw response was: {repr(raw_response)}")
-        raise ValueError(f"Invalid JSON from LLM: {e}")
+    if prompt_type == "ollama_compare":
+        # Handle both simple and verbose responses
+        response_lower = raw_response.strip().lower()
+        
+        # Try to extract classification from verbose output
+        if response_lower not in ["depressed", "not-depressed"]:
+            # Look for "**Classification**" sections (verbose model output)
+            if "**classification**" in response_lower:
+                # Extract everything after **classification**
+                parts = response_lower.split("**classification**")
+                if len(parts) > 1:
+                    classification_part = parts[-1].strip()
+                    # Find first occurrence of depressed or not-depressed
+                    if "not-depressed" in classification_part or ("not" in classification_part and "depress" in classification_part):
+                        normalized = "not-depressed"
+                    elif "depressed" in classification_part:
+                        normalized = "depressed"
+                    else:
+                        normalized = response_lower
+                else:
+                    normalized = response_lower
+            # Look for the last line which might contain the classification
+            elif "\n" in response_lower:
+                last_line = response_lower.strip().split("\n")[-1].strip()
+                if "not-depressed" in last_line or ("not" in last_line and "depress" in last_line):
+                    normalized = "not-depressed"
+                elif "depressed" in last_line:
+                    normalized = "depressed"
+                else:
+                    normalized = last_line
+            else:
+                normalized = response_lower
+            
+            if normalized not in ["depressed", "not-depressed"]:
+                logger.warning(f"Unexpected raw label from ollama_compare prompt: {raw_response!r}")
+        else:
+            normalized = response_lower
+        
+        data = {"class": normalized, "raw_response": raw_response}
+    else:
+        try:
+            data = clean_json_response(raw_response)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON response: {e}")
+            logger.error(f"Raw response was: {repr(raw_response)}")
+            raise ValueError(f"Invalid JSON from LLM: {e}")
+
+    completion_tokens = min(max_output_tokens, estimate_tokens(raw_response))
+    estimated_total_tokens = prompt_tokens + completion_tokens
+    _daily_tokens_used += estimated_total_tokens
+
+    usage = get_daily_token_usage(daily_budget_tokens=budget)
+    logger.info(
+        f"Estimated token usage this call: {estimated_total_tokens} "
+        f"(prompt={prompt_tokens}, completion={completion_tokens}). "
+        f"Daily remaining: {usage['estimated_remaining']}/{usage['budget']}"
+    )
     
     return {
         "analysis": data,
-        "prompt_type": prompt_type
+        "prompt_type": prompt_type,
+        "token_usage": {
+            "estimated_prompt_tokens": prompt_tokens,
+            "estimated_completion_tokens": completion_tokens,
+            "estimated_total_tokens": estimated_total_tokens,
+            "estimated_daily_used": usage["estimated_used"],
+            "estimated_daily_remaining": usage["estimated_remaining"],
+            "daily_budget": usage["budget"],
+        },
     }
 
 
 def analyze_csv_content(content: str, model: str, prompt_type: str = "simple", 
                         text_column: str = None, label_column: str = None,
                         depression_threshold: int = None, include_neutral: bool = False,
-                        rate_limit_seconds: float = 2.0) -> dict:
+                        rate_limit_seconds: float = 2.0,
+                        daily_budget_tokens: int = None,
+                        min_output_tokens: int = MIN_OUTPUT_TOKENS) -> dict:
     """
     Analyze multiple text entries from CSV content.
     
@@ -422,6 +657,8 @@ def analyze_csv_content(content: str, model: str, prompt_type: str = "simple",
         depression_threshold: If set, labels <= this value = depression
         include_neutral: If True, include label=2 entries
         rate_limit_seconds: Delay between API calls (default: 2.0 for 30 req/min)
+        daily_budget_tokens: Optional daily token cap override
+        min_output_tokens: Minimum completion tokens per call
         
     Returns:
         Dictionary with individual results, aggregate statistics, and accuracy metrics
@@ -459,7 +696,15 @@ def analyze_csv_content(content: str, model: str, prompt_type: str = "simple",
             time.sleep(rate_limit_seconds)
         
         try:
-            response = analyze_with_groq(text, model, prompt_type)
+            calls_remaining = len(entries) - idx
+            response = analyze_with_groq(
+                text,
+                model,
+                prompt_type,
+                daily_budget_tokens=daily_budget_tokens,
+                calls_remaining=calls_remaining,
+                min_output_tokens=min_output_tokens,
+            )
             analysis = response.get("analysis", {})
             
             # Extract classification
@@ -509,13 +754,30 @@ def analyze_csv_content(content: str, model: str, prompt_type: str = "simple",
         except Exception as e:
             logger.error(f"Error analyzing entry {idx + 1}: {e}")
             error_count += 1
+            error_message = str(e)
             results.append({
                 "entry_number": idx + 1,
                 "text": text[:100] + "..." if len(text) > 100 else text,
                 "predicted": "error",
                 "expected": expected_label,
-                "error": str(e)
+                "error": error_message
             })
+
+            # Stop early when budget is exhausted and mark remaining entries.
+            if "Daily token budget exhausted" in error_message or "insufficient" in error_message.lower():
+                logger.warning("Stopping CSV analysis due to token budget limit")
+                for remaining_idx in range(idx + 1, len(entries)):
+                    remaining_entry = entries[remaining_idx]
+                    remaining_expected = remaining_entry.get('label')
+                    error_count += 1
+                    results.append({
+                        "entry_number": remaining_idx + 1,
+                        "text": remaining_entry['text'][:100] + "..." if len(remaining_entry['text']) > 100 else remaining_entry['text'],
+                        "predicted": "skipped_budget",
+                        "expected": remaining_expected,
+                        "error": "Skipped due to daily token budget limit"
+                    })
+                break
     
     # Calculate statistics
     total_analyzed = depressed_count + not_depressed_count
@@ -531,7 +793,8 @@ def analyze_csv_content(content: str, model: str, prompt_type: str = "simple",
             "entries": results
         },
         "model": model,
-        "prompt_type": prompt_type
+        "prompt_type": prompt_type,
+        "token_budget": get_daily_token_usage(daily_budget_tokens),
     }
     
     # Add accuracy metrics if labels were present
