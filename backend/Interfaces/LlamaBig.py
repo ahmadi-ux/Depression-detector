@@ -3,7 +3,7 @@
 import json
 from ..Common.groq_handler import analyze_with_groq
 
-GROQ_MODEL = "llama-3.1-8b-instant"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
 def extract_signals(text: str, prompt_type: str = "simple") -> dict:

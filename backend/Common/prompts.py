@@ -228,6 +228,14 @@ Respond ONLY with a valid JSON object:
 {{"class": "depression" or "no-depression", "confidence": 0.0-1.0}}
 
 SENTENCE: {text}"""
+    ,
+    "ollama_compare": """Classify whether the following text indicates depression.
+Respond with exactly 'depressed' or 'not-depressed'.
+
+TEXT:
+{text}
+
+LABEL:"""
 }
 
 

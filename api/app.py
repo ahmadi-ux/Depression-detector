@@ -51,7 +51,7 @@ def upload():
     logger.info(f"LLM: {llm}, Prompt Type: {prompt_type}")
     
     # Define available LLMs
-    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound"]
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig"]
     
     # Validate LLM
     if llm not in AVAILABLE_LLMS:

@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router'
 import Navigation from './components/sections/Navigation'
 import Home from './components/sections/Home'
-import ProjectDetails from './components/projectFolder/ProjectDetails'
 import DataUpload from './components/sections/DataUpload'
 import DataUploadTxt from './components/sections/DataUploadTxt'
 
