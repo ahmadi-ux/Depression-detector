@@ -5,9 +5,13 @@ import io
 import json
 import logging
 import os
+import sys
 from uuid import uuid4
 import threading
 from datetime import datetime
+
+# Add parent directory to path so we can import backend module
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load environment variables from backend/Common/.env
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'backend', 'Common', '.env'))
@@ -23,8 +27,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Expose Content-Disposition header for downloads
-CORS(app, expose_headers=["Content-Disposition"])
+# Expose Content-Disposition and classification headers for downloads
+CORS(app, expose_headers=["Content-Disposition", "X-Depression-Classification"])
 
 jobs = {}  # In-memory job store (use Redis/DB in prod)
 
@@ -132,11 +136,14 @@ def process_job(job_id, llm, prompt_type, file_payloads):
         jobs[job_id]["progress"] = 10
         
         logger.info(f"[{job_id}] Calling unified LLM engine: {llm}")
-        # Call the unified engine with the selected LLM type
-        pdf_bytes = run_llm_job(llm, file_payloads, prompt_type)
+        # Call the unified engine - now returns (pdf_bytes, classification)
+        pdf_bytes, classification = run_llm_job(llm, file_payloads, prompt_type)
         logger.info(f"[{job_id}] LLM handler completed. PDF size: {len(pdf_bytes)} bytes")
+        logger.info(f"[{job_id}] Classification: {classification}")
+        
         # Store result
         jobs[job_id]["pdf"] = pdf_bytes
+        jobs[job_id]["classification"] = classification
         jobs[job_id]["status"] = "complete"
         jobs[job_id]["completed_at"] = datetime.now().isoformat()
         jobs[job_id]["progress"] = 100
@@ -172,12 +179,18 @@ def get_job(job_id):
         llm = job.get("llm", "LLM")
         jobid8 = job_id[:8]
         download_name = f"{base_name}_{llm}_{jobid8}.pdf"
-        return send_file(
+        
+        # Create response with PDF
+        response = send_file(
             io.BytesIO(job["pdf"]),
             mimetype="application/pdf",
             as_attachment=True,
             download_name=download_name
         )
+        # Add classification to response headers
+        classification = job.get("classification", "unknown")
+        response.headers["X-Depression-Classification"] = classification
+        return response
     elif job["status"] == "error":
         # Return error details
         return jsonify({"status": "error", "error": job["error"]}), 400

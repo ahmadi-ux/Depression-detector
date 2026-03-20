@@ -72,12 +72,14 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
         prompt_type: The prompt template type to use (default: 'simple')
         
     Returns:
-        PDF bytes for the analysis report
+        Tuple of (pdf_bytes, depression_classification) where classification is 'depressed' or 'not-depressed'
     """
     llm_type = llm_type.lower()
     logger.info(f"Running job with LLM: {llm_type}, Prompt: {prompt_type}")
     
     combined_results = []
+    depression_levels = []  # Track all depression levels
+    
     for payload in file_payloads:
         logger.debug(f"Processing file: {payload['filename']}")
         
@@ -107,11 +109,20 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
             analyze_text = get_llm_interface(llm_type)
             llm_output = analyze_text(extracted_text, prompt_type)
         
+        # Extract depression classification from llm_output
+        depression_class = extract_depression_classification(llm_output)
+        depression_levels.append(depression_class)
+        logger.info(f"Extracted classification: {depression_class}")
+        
         combined_results.append({
             "filename": payload["filename"],
             "text": extracted_text,
             "analysis": llm_output
         })
+    
+    # Determine overall depression classification
+    # If any result is 'depressed' or 'high'/'medium', classify as depressed
+    overall_classification = determine_overall_classification(depression_levels)
     
     # Get display name for PDF title
     display_name = LLM_DISPLAY_NAMES.get(llm_type, llm_type.capitalize())
@@ -119,5 +130,87 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
     # Generate PDF report
     pdf = generate_combined_pdf_report(combined_results, title_suffix=display_name)
     
-    logger.info(f"Job completed successfully for {llm_type}")
-    return pdf.getvalue()
+    logger.info(f"Job completed successfully for {llm_type}. Classification: {overall_classification}")
+    return pdf.getvalue(), overall_classification
+
+
+def extract_depression_classification(llm_output: dict) -> str:
+    """
+    Extract depression classification from LLM output.
+    Returns 'depressed', 'not-depressed', or 'unknown'
+    """
+    try:
+        analysis = llm_output.get("analysis", {})
+        
+        # Check various possible structures based on prompt type
+        if isinstance(analysis, dict):
+            # Check for depression_likelihood (high/medium/low pattern)
+            if 'depression_likelihood' in analysis:
+                level = str(analysis.get('depression_likelihood', '')).lower()
+                if level in ['high', 'medium']:
+                    return 'depressed'
+                elif level == 'low':
+                    return 'not-depressed'
+            
+            # Check for class field - be explicit about patterns
+            if 'class' in analysis:
+                cls = str(analysis.get('class', '')).lower().strip()
+                # Check for NOT depressed patterns first
+                if cls in ['not-depressed', 'no-depression', 'not depressed', 'no depression', 'none', 'no', 'healthy', 'normal']:
+                    return 'not-depressed'
+                # Check for depressed patterns
+                elif cls in ['depressed', 'depression', 'yes', 'positive']:
+                    return 'depressed'
+                # Fallback to substring matching for other variations
+                elif 'not' in cls or 'no-' in cls or cls.startswith('no '):
+                    return 'not-depressed'
+                elif 'depress' in cls:
+                    return 'depressed'
+            
+            # Check for prediction field
+            if 'prediction' in analysis:
+                pred = analysis.get('prediction', {})
+                if isinstance(pred, dict):
+                    cls = str(pred.get('class', '')).lower().strip()
+                    if cls in ['not-depressed', 'no-depression', 'not depressed', 'no depression']:
+                        return 'not-depressed'
+                    elif cls in ['depressed', 'depression']:
+                        return 'depressed'
+                    elif 'not' in cls or 'no' in cls:
+                        return 'not-depressed'
+                    elif 'depress' in cls:
+                        return 'depressed'
+            
+            # Check for assessment field
+            if 'assessment' in analysis:
+                assess = str(analysis.get('assessment', '')).lower()
+                if assess in ['high', 'medium']:
+                    return 'depressed'
+                elif assess == 'low':
+                    return 'not-depressed'
+        
+        logger.warning(f"Could not extract depression classification from: {analysis}")
+        return 'unknown'
+    except Exception as e:
+        logger.error(f"Error extracting depression classification: {e}")
+        return 'unknown'
+
+
+def determine_overall_classification(classifications: list) -> str:
+    """
+    Determine overall classification from multiple file results.
+    If any file is 'depressed', overall is 'depressed'
+    """
+    if not classifications:
+        return 'unknown'
+    
+    # If any result is depressed, overall is depressed
+    if 'depressed' in classifications:
+        return 'depressed'
+    
+    # If all are not-depressed, overall is not-depressed
+    if all(c == 'not-depressed' for c in classifications):
+        return 'not-depressed'
+    
+    # Mixed or unknown
+    return 'depressed' if 'unknown' not in classifications else 'unknown'

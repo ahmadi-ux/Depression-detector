@@ -35,7 +35,7 @@ const PROMPT_OPTIONS = [
 /** Data Upload Section with dialog form for uploading files
  * - Dialog with a contact form when button is clicked
 */
-export default function DataUpload() {
+export default function DataUpload({ onShowResult }) {
   const [open, setOpen] = useState(false);
   const [selectedLLM, setSelectedLLM] = useState("Gemini");
   const [selectedPrompt, setSelectedPrompt] = useState("simple");
@@ -124,7 +124,12 @@ export default function DataUpload() {
               </ul>
             </div>
 
-            <ContactForm onSuccess={() => setOpen(false)} llm={selectedLLM} prompt={selectedPrompt} />
+            <ContactForm 
+              onSuccess={() => setOpen(false)} 
+              llm={selectedLLM} 
+              prompt={selectedPrompt}
+              onShowResult={onShowResult}
+            />
           </DialogContent>
         </Dialog>
       </div>

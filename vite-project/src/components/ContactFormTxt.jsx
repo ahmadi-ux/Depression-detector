@@ -1,10 +1,12 @@
 import { useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import { ResultAnimation } from "./ResultAnimation";
 import {
   Form, FormControl, FormField,
   FormItem, FormLabel, FormMessage,
 } from "./ui/form";
+import { useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 console.log("API_URL:", API_URL);
@@ -14,8 +16,10 @@ console.log("API_URL:", API_URL);
  * - Text input via textarea
  * - Backend processes with LLMs
  * - Returns PDF report for download
+ * - Triggers animations based on depression classification
  */
-export default function ContactFormTxt({ onSuccess, llm, prompt }) {
+export default function ContactFormTxt({ onSuccess, llm, prompt, onShowResult }) {
+  const [prediction, setPrediction] = useState(null);
   const form = useForm({
     defaultValues: {
       text: "",
@@ -96,6 +100,19 @@ export default function ContactFormTxt({ onSuccess, llm, prompt }) {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             isComplete = true;
+            
+            // Extract depression classification from response headers
+            const classification = statusResponse.headers.get('X-Depression-Classification');
+            if (classification) {
+              console.log(`✓ Classification extracted: ${classification}`);
+              // Call parent handler immediately with the classification (don't wait for state)
+              if (onShowResult) {
+                onShowResult(classification, "✓ Report generated and downloaded successfully!");
+              }
+            } else {
+              console.log("⚠ No classification header found");
+            }
+            
             console.log("✓ Download complete!");
           } else {
             // Still processing - parse JSON status
@@ -115,7 +132,6 @@ export default function ContactFormTxt({ onSuccess, llm, prompt }) {
       }
 
       form.reset({ text: "" });
-      alert("✓ Report generated and downloaded successfully!");
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Error:", error);

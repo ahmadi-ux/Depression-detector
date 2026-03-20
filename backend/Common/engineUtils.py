@@ -13,6 +13,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
 from werkzeug.datastructures import FileStorage
+from docx import Document
 
 # Setup logging for debugging
 logging.basicConfig(level=logging.DEBUG)
@@ -36,6 +37,22 @@ def extract_text_from_plain(file, filetype="TXT/CSV"):
     except Exception as e:
         raise ValueError(f"Error reading {filetype}: {str(e)}")
 
+def extract_text_from_docx(file):
+    try:
+        doc = Document(file)
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        # Also extract text from tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text += cell.text + " "
+                text += "\n"
+        return text.strip()
+    except Exception as e:
+        raise ValueError(f"Error reading DOCX: {str(e)}")
+
 def extract_text_from_file(file):
     filename = file.filename.lower()
     ext = os.path.splitext(filename)[1]
@@ -43,6 +60,8 @@ def extract_text_from_file(file):
         '.pdf': extract_text_from_pdf,
         '.csv': lambda f: extract_text_from_plain(f, filetype="CSV"),
         '.txt': lambda f: extract_text_from_plain(f, filetype="TXT"),
+        '.docx': extract_text_from_docx,
+        '.doc': extract_text_from_docx,
     }
     if ext in extractors:
         return extractors[ext](file)

@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { ResultAnimation } from "./ResultAnimation";
+import { useState } from "react";
 import {
   Form, FormControl, FormField, 
   FormItem, FormLabel, FormMessage,
@@ -13,8 +15,10 @@ console.log("API_URL:", API_URL);
  * - Upload file (PDF, CSV, TXT)
  * - Backend processes with llms
  * - Returns PDF report for download
+ * - Triggers animations based on depression classification
  */
-export default function ContactForm({ onSuccess, llm, prompt }) {
+export default function ContactForm({ onSuccess, llm, prompt, onShowResult }) {
+  const [prediction, setPrediction] = useState(null);
   const form = useForm({
     defaultValues: {
       files: [],
@@ -109,6 +113,19 @@ export default function ContactForm({ onSuccess, llm, prompt }) {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             isComplete = true;
+            
+            // Extract depression classification from response headers
+            const classification = statusResponse.headers.get('X-Depression-Classification');
+            if (classification) {
+              console.log(`✓ Classification extracted: ${classification}`);
+              // Call parent handler immediately with the classification (don't wait for state)
+              if (onShowResult) {
+                onShowResult(classification, "✓ Report generated and downloaded successfully!");
+              }
+            } else {
+              console.log("⚠ No classification header found");
+            }
+            
             console.log("✓ Download complete!");
           } else {
             // Still processing - parse JSON status
@@ -128,7 +145,6 @@ export default function ContactForm({ onSuccess, llm, prompt }) {
       }
 
       form.reset({ file: null });
-      alert("✓ Report generated and downloaded successfully!");
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Error:", error);
@@ -150,14 +166,14 @@ export default function ContactForm({ onSuccess, llm, prompt }) {
                 <FormControl>
                   <Input
                     type="file"
-                    accept=".pdf,.csv,.txt"
+                    accept=".pdf,.csv,.txt,.doc,.docx"
                     multiple
                     onChange={(e) => field.onChange(Array.from(e.target.files))}
                   />
                 </FormControl>
                 <FormMessage />
                 <p className="text-sm text-gray-500 mt-2">
-                  Supported formats: PDF, CSV, TXT
+                  Supported formats: PDF, CSV, TXT, DOC, DOCX
                 </p>
               </FormItem>
             )}
