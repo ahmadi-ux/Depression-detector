@@ -191,7 +191,7 @@ results_arr.insert(0, "TP: " + str(TP) + " FP: " + str(FP) + " TN: " + str(TN) +
                    + " Precision: " + str(percision) + " Recall: " + str(recall) + " Accuracy: " + str(accuracy) + " F1 Score: " + str(f1_score) + " Model: " + MODEL_NAME)
 
 # Generate a datetime string for the filename
-dt_str = datetime.now().strftime(f"MODEL_{MODEL_NAME.replace(':', '_')}_%m%d_%H%M%S")
+dt_str = datetime.now().strftime(f"model_{MODEL_NAME.replace(':', '_')}_%m%d_%H%M%S")
 results_filename = f"results_{dt_str}.txt"
 with open(results_filename, "w", encoding="utf-8") as f:
     for line in results_arr:
