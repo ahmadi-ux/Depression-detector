@@ -11,7 +11,7 @@ OLLAMA_URL = "http://localhost:11434"
 REQUEST_TIMEOUT_SEC = 300
 NUM_PREDICT = 2200
 TEMPERATURE = 0
-MODEL_NAME = "gpt-oss:20b"
+MODEL_NAME = "llama3.1"
 #llama3.1
 #gpt-oss:20b
 #emollama:v1
@@ -44,7 +44,6 @@ RMHD_2['label'] = 0
 RMHD_3['label'] = 0
 RMHD_4['label'] = 0
 
-
 #combine datasets by shared columns (text and label)
 common_columns = ["text", "label"]
 emoDep = emoDep[common_columns]
@@ -59,9 +58,21 @@ dataset_RMHD_3 = Dataset.from_pandas(RMHD_3)
 dataset_RMHD_4 = Dataset.from_pandas(RMHD_4)
 
 #13,636 samples total, 6,315 depressed (label 0) and 7,321 not-depressed
-combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
-split_dataset = combined_dataset.train_test_split(test_size=0.1, seed=42) #remember seed so we can pull out training data.
-test_data = split_dataset["test"]
+#combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
+#split_dataset = combined_dataset.train_test_split(test_size=0.1, seed=42) #remember seed so we can pull out training data.
+#test_data = split_dataset["test"]
+
+#Essay data set option!
+essay_data = pd.read_csv("Dataset/synthetic_essays.csv")
+essay_data = essay_data.rename(columns={"Label": "label"})
+essay_data = essay_data.rename(columns={"Text": "text"})
+essay_data = essay_data[common_columns]
+dataset_essay = Dataset.from_pandas(essay_data)
+combined_dataset = concatenate_datasets([dataset_essay])
+test_data = combined_dataset
+#split_dataset = combined_dataset.train_test_split(test_size=1.0, seed=42) #remember seed so we can pull out training data.
+#test_data = split_dataset["test"]
+
 
 # Print count of entries with label 0 (depressed)
 print("Count with label 0:", combined_dataset.filter(lambda x: x['label'] == 0).num_rows)
@@ -174,9 +185,10 @@ for each in test_data:
     print ("Total ran: " + str(total_ran) + "/" + str(len(test_data)))
     
 # ERROR is safety suicide hotline response from LLM so calculated as TP
-percision = (TP + ERROR) / ((TP + ERROR) + FP)
-recall = (TP + ERROR) / ((TP + ERROR) + FN)
-accuracy = (TP + ERROR + TN) / (TP + TN + FP + FN + ERROR)
+# Change how error is handled for other models/test sets.
+percision = (TP) / ((TP) + FP)
+recall = (TP) / ((TP) + FN)
+accuracy = (TP + TN) / (TP + TN + FP + FN)
 f1_score = 2 * (percision * recall) / (percision + recall)
 
 
