@@ -164,6 +164,14 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
             label = pred.get('class', 'UNKNOWN')
             confidence = pred.get('confidence', 0.0)
             logger.info(f"✓ Found 'sentence_analysis' structure: {label}")
+        elif 'class' in actual_analysis and 'raw_response' in actual_analysis:
+            # ollama_compare format (simple classification)
+            label = actual_analysis.get('class', 'UNKNOWN')
+            # Convert not-depressed/depressed to proper case for display
+            if isinstance(label, str):
+                label = label.replace('-', ' ').title()
+            confidence = 0.5  # Default confidence for simple classifier
+            logger.info(f"✓ Found 'ollama_compare' (class + raw_response) structure: {label}")
         else:
             logger.warning(f"⚠ Unknown response structure. Keys: {actual_analysis.keys()}")
 

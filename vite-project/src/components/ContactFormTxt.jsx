@@ -9,7 +9,7 @@ import {
 import { useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-console.log("API_URL:", API_URL);
+// console.log("API_URL:", API_URL);
 
 /**
  * Contact Form Component
@@ -34,7 +34,7 @@ export default function ContactFormTxt({ onSuccess, llm, prompt, onShowResult })
       formData.append("text", values.text);
 
       // Send to backend - returns immediately with job ID
-      console.log("Submitting text...");
+      // console.log("Submitting text...");
       const uploadResponse = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
@@ -47,7 +47,7 @@ export default function ContactFormTxt({ onSuccess, llm, prompt, onShowResult })
 
       const uploadData = await uploadResponse.json();
       const jobId = uploadData.job_id;
-      console.log(`✓ Job started: ${jobId}`);
+      // console.log(`✓ Job started: ${jobId}`);
 
       // Poll for job completion
       let isComplete = false;
@@ -60,7 +60,7 @@ export default function ContactFormTxt({ onSuccess, llm, prompt, onShowResult })
         pollCount++;
 
         try {
-          console.log(`[Poll ${pollCount}] Checking status for job ${jobId.substring(0, 8)}...`);
+          // console.log(`[Poll ${pollCount}] Checking status for job ${jobId.substring(0, 8)}...`);
           const statusResponse = await fetch(`${API_URL}/api/job/${jobId}`);
           
           if (!statusResponse.ok) {
@@ -80,7 +80,7 @@ export default function ContactFormTxt({ onSuccess, llm, prompt, onShowResult })
           
           if (contentType && contentType.includes('application/pdf')) {
             // PDF is ready!
-            console.log("✓ PDF ready! Downloading...");
+            // console.log("✓ PDF ready! Downloading...");
             const blob = await statusResponse.blob();
             const url = window.URL.createObjectURL(blob);
             // Try to get filename from Content-Disposition header
@@ -104,23 +104,23 @@ export default function ContactFormTxt({ onSuccess, llm, prompt, onShowResult })
             // Extract depression classification from response headers
             const classification = statusResponse.headers.get('X-Depression-Classification');
             if (classification) {
-              console.log(`✓ Classification extracted: ${classification}`);
+              // console.log(`✓ Classification extracted: ${classification}`);
               // Call parent handler immediately with the classification (don't wait for state)
               if (onShowResult) {
                 onShowResult(classification, "✓ Report generated and downloaded successfully!");
               }
             } else {
-              console.log("⚠ No classification header found");
+              // console.log("⚠ No classification header found");
             }
             
-            console.log("✓ Download complete!");
+            // console.log("✓ Download complete!");
           } else {
             // Still processing - parse JSON status
             const statusData = await statusResponse.json();
-            console.log(`Status: ${statusData.status} | Progress: ${statusData.progress}%`);
+            // console.log(`Status: ${statusData.status} | Progress: ${statusData.progress}%`);
           }
         } catch (pollError) {
-          console.error(`Poll error: ${pollError.message}`);
+          // console.error(`Poll error: ${pollError.message}`);
           if (pollError.message.startsWith("Processing failed")) {
             throw pollError; // stop everything
           }
@@ -134,7 +134,7 @@ export default function ContactFormTxt({ onSuccess, llm, prompt, onShowResult })
       form.reset({ text: "" });
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error:", error);
+      // console.error("Error:", error);
       alert(`❌ Error: ${error.message}`);
     }
   };

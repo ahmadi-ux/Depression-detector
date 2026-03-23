@@ -29,7 +29,8 @@ const PROMPT_OPTIONS = [
   { value: "chain_of_thought", label: "Chain-of-Thought (Reasoning)" },
   { value: "few_shot", label: "Few-Shot (Example Based)" },
   { value: "free_form", label: "Free-Form (Narrative)" },
-  { value: "sentence", label: "Sentence-by-Sentence" }
+  { value: "sentence", label: "Sentence-by-Sentence" },
+  { value: "ollama_compare", label: "Ollama Compare (Zero-Shot)" }
 ];
 
 /** Data Upload Section with dialog form for uploading files
@@ -121,6 +122,7 @@ export default function DataUpload({ onShowResult }) {
                 <li><strong>Few-Shot:</strong> Example-based assessment</li>
                 <li><strong>Free-Form:</strong> Clinical narrative analysis</li>
                 <li><strong>Sentence-by-Sentence:</strong> Splits text into sentences and analyzes each </li>
+                <li><strong>Ollama-Compare:</strong> Simple prompt used for zero-shot comparison</li>
               </ul>
             </div>
 

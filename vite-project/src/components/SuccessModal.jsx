@@ -9,31 +9,31 @@ export function SuccessModal({ show, message, classification, onClose }) {
   const containerRef = useRef(null);
   const animationIntervalRef = useRef(null);
 
-  console.log("SuccessModal rendered - show prop:", show, "isVisible state:", isVisible, "classification:", classification);
+  // console.log("SuccessModal rendered - show prop:", show, "isVisible state:", isVisible, "classification:", classification);
 
   useEffect(() => {
-    console.log("SuccessModal useEffect - show changed to:", show);
+    // console.log("SuccessModal useEffect - show changed to:", show);
     
     if (show) {
       setIsVisible(true);
-      console.log("SuccessModal: Modal should go VISIBLE with classification:", classification);
+      // console.log("SuccessModal: Modal should go VISIBLE with classification:", classification);
       
       // Trigger animations immediately and loop them
       if (classification === 'depressed') {
-        console.log("SuccessModal: Triggering looping crying animation");
+        // console.log("SuccessModal: Triggering looping crying animation");
         loopCryingAnimation();
       } else if (classification === 'not-depressed') {
-        console.log("SuccessModal: Triggering looping fireworks");
+        // console.log("SuccessModal: Triggering looping fireworks");
         loopFireworksAnimation();
       }
       
       // Auto-close after 30 seconds (plenty of time to see the animation)
       const timer = setTimeout(() => {
-        console.log("SuccessModal: Auto-closing after 30 seconds");
+        // console.log("SuccessModal: Auto-closing after 30 seconds");
         handleClose();
       }, 30000);
       return () => {
-        console.log("SuccessModal: Cleaning up timer and animations");
+        // console.log("SuccessModal: Cleaning up timer and animations");
         clearTimeout(timer);
         if (animationIntervalRef.current) {
           clearInterval(animationIntervalRef.current);
@@ -72,25 +72,25 @@ export function SuccessModal({ show, message, classification, onClose }) {
   };
 
   const handleClose = () => {
-    console.log("SuccessModal: handleClose called");
+    // console.log("SuccessModal: handleClose called");
     setIsVisible(false);
     if (animationIntervalRef.current) {
       clearInterval(animationIntervalRef.current);
       animationIntervalRef.current = null;
     }
     if (onClose) {
-      console.log("SuccessModal: Calling onClose callback");
+      // console.log("SuccessModal: Calling onClose callback");
       onClose();
     }
   };
 
-  console.log("SuccessModal: About to check if should return null - isVisible:", isVisible);
+  // console.log("SuccessModal: About to check if should return null - isVisible:", isVisible);
   if (!isVisible) {
-    console.log("SuccessModal: isVisible is false, returning null (nothing rendered)");
+    // console.log("SuccessModal: isVisible is false, returning null (nothing rendered)");
     return null;
   }
 
-  console.log("SuccessModal: Rendering modal UI!");
+  // console.log("SuccessModal: Rendering modal UI!");
 
   return (
     <>
@@ -322,10 +322,10 @@ function playSuccessSound() {
     const audio = new Audio('/smg4-sound-effects-well-ive-done-all-i-can-do.mp3'); // Audio file in public folder
     audio.volume = 0.5;
     audio.play().catch(() => {
-      console.log('Audio playback failed or user denied permission');
+      // console.log('Audio playback failed or user denied permission');
     });
   } catch (e) {
-    console.log('Audio not available');
+    // console.log('Audio not available');
   }
 }
 
@@ -335,10 +335,10 @@ function playWarningSound() {
     const audio = new Audio('/smg4-sound-effects-well-ive-done-all-i-can-do.mp3'); // Audio file in public folder
     audio.volume = 0.5;
     audio.play().catch(() => {
-      console.log('Audio playback failed or user denied permission');
+      // console.log('Audio playback failed or user denied permission');
     });
   } catch (e) {
-    console.log('Audio not available');
+    // console.log('Audio not available');
   }
 }
 

@@ -154,9 +154,16 @@ def process_job(job_id, llm, prompt_type, file_payloads):
         logger.error(f"[{job_id}] ❌ Job failed with error:")
         logger.error(f"{type(e).__name__}: {str(e)}", exc_info=True)
         
+        # Compose better error message with context
+        error_msg = str(e)
+        if "empty response" in error_msg.lower():
+            error_msg = f"{error_msg} - Try retrying or using a different LLM model. This often indicates API quota limits or content safety filters."
+        elif "not valid json" in error_msg.lower():
+            error_msg = f"{error_msg} - The {llm} model returned a malformed response. Try retrying with a different prompt type like 'structured' or 'simple'."
+        
         # Handle errors
         jobs[job_id]["status"] = "error"
-        jobs[job_id]["error"] = str(e)
+        jobs[job_id]["error"] = error_msg
         jobs[job_id]["failed_at"] = datetime.now().isoformat()
         
         logger.error(f"{'='*80}\n")
@@ -209,17 +216,43 @@ def get_job(job_id):
 @app.route("/", methods=["GET"])
 def home():
     """API info endpoint"""
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig"]
     return jsonify({
         "message": "Depression Detector API", 
         "status": "running",
         "endpoints": {
             "upload": "/api/upload",
-            "job_status": "/api/job/<job_id>"
+            "job_status": "/api/job/<job_id>",
+            "test_gemini": "/api/test/gemini"
         },
         "supported_inputs": ["files", "text"],
-        "supported_llms": list(LLM_HANDLERS.keys()),
+        "supported_llms": AVAILABLE_LLMS,
         "supported_prompts": get_available_prompts()
     })
+
+
+@app.route("/api/test/gemini", methods=["GET"])
+def test_gemini_connection():
+    """
+    Test Gemini API connection and return diagnostic information.
+    Useful for debugging API quota, key, or network issues.
+    """
+    logger.info("Testing Gemini API connection...")
+    try:
+        from backend.Interfaces.Gemini import test_gemini_connection
+        result = test_gemini_connection()
+        return jsonify(result)
+    except ImportError:
+        return jsonify({
+            "error": "Could not import Gemini interface",
+            "status": "❌ Import failed"
+        }), 500
+    except Exception as e:
+        logger.error(f"Test endpoint error: {e}")
+        return jsonify({
+            "error": str(e),
+            "status": "❌ Test failed"
+        }), 500
 
 
 if __name__ == "__main__":

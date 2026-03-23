@@ -4,7 +4,9 @@ Dynamically routes to the appropriate backend based on LLM selection.
 """
 
 import io
+import json
 import logging
+import traceback
 from werkzeug.datastructures import FileStorage
 from backend.Common.engineUtils import extract_text_from_file, generate_combined_pdf_report
 from backend.Common.sentence_analyzer import analyze_sentences
@@ -107,7 +109,19 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
         else:
             # Get the interface function for this LLM
             analyze_text = get_llm_interface(llm_type)
+            logger.info(f"\n{'='*80}")
+            logger.info(f"CALLING LLM INTERFACE: {llm_type}")
+            logger.info(f"{'='*80}")
             llm_output = analyze_text(extracted_text, prompt_type)
+            
+            # Log the raw LLM output structure immediately
+            logger.info(f"\n{'='*80}")
+            logger.info(f"RAW LLM OUTPUT FROM {llm_type.upper()}")
+            logger.info(f"{'='*80}")
+            logger.info(f"Output type: {type(llm_output)}")
+            logger.info(f"Output keys: {list(llm_output.keys()) if isinstance(llm_output, dict) else 'N/A'}")
+            logger.info(f"\nFull output:\n{json.dumps(llm_output, indent=2, default=str)}")
+            logger.info(f"{'='*80}\n")
         
         # Extract depression classification from llm_output
         depression_class = extract_depression_classification(llm_output)
@@ -138,61 +152,152 @@ def extract_depression_classification(llm_output: dict) -> str:
     """
     Extract depression classification from LLM output.
     Returns 'depressed', 'not-depressed', or 'unknown'
+    
+    WHY UNKNOWN? This function checks multiple response structures.
+    Enable debug logging below to see which structure your LLM returns.
     """
     try:
+        logger.info(f"\n{'='*80}")
+        logger.info("EXTRACTING DEPRESSION CLASSIFICATION")
+        logger.info(f"{'='*80}")
+        
+        # Log the entire output structure first
+        logger.info(f"LLM Output type: {type(llm_output)}")
+        logger.info(f"LLM Output keys: {list(llm_output.keys()) if isinstance(llm_output, dict) else 'N/A'}")
+        logger.debug(f"Full LLM Output:\n{json.dumps(llm_output, indent=2, default=str)}")
+        
         analysis = llm_output.get("analysis", {})
+        logger.info(f"\nAnalysis extracted: {type(analysis)}")
+        logger.info(f"Analysis is dict: {isinstance(analysis, dict)}")
+        if isinstance(analysis, dict):
+            logger.info(f"Analysis keys: {list(analysis.keys())}")
+        logger.debug(f"Analysis content:\n{json.dumps(analysis, indent=2, default=str)}")
         
         # Check various possible structures based on prompt type
         if isinstance(analysis, dict):
-            # Check for depression_likelihood (high/medium/low pattern)
+            # ============ CHECK 1: depression_likelihood (structured prompt) ============
             if 'depression_likelihood' in analysis:
                 level = str(analysis.get('depression_likelihood', '')).lower()
+                logger.info(f"\n✓ FOUND: 'depression_likelihood' = '{level}'")
                 if level in ['high', 'medium']:
+                    logger.info(f"  MATCH: Level '{level}' → DEPRESSED")
                     return 'depressed'
                 elif level == 'low':
+                    logger.info(f"  MATCH: Level '{level}' → NOT_DEPRESSED")
                     return 'not-depressed'
+                else:
+                    logger.warning(f"  NO_MATCH: Level '{level}' not in expected values [high, medium, low]")
+            else:
+                logger.debug("  ✗ NOT_FOUND: 'depression_likelihood' key missing")
             
-            # Check for class field - be explicit about patterns
+            # ============ CHECK 2: class field (simple/feature_extraction prompts) ============
             if 'class' in analysis:
                 cls = str(analysis.get('class', '')).lower().strip()
-                # Check for NOT depressed patterns first
-                if cls in ['not-depressed', 'no-depression', 'not depressed', 'no depression', 'none', 'no', 'healthy', 'normal']:
+                logger.info(f"\n✓ FOUND: 'class' = '{cls}'")
+                
+                # Exact matches for NOT depressed
+                not_depressed_patterns = ['not-depressed', 'no-depression', 'not depressed', 'no depression', 'none', 'no', 'healthy', 'normal']
+                if cls in not_depressed_patterns:
+                    logger.info(f"  MATCH: Class '{cls}' matches NOT_DEPRESSED patterns → NOT_DEPRESSED")
                     return 'not-depressed'
-                # Check for depressed patterns
-                elif cls in ['depressed', 'depression', 'yes', 'positive']:
+                
+                # Exact matches for depressed
+                depressed_patterns = ['depressed', 'depression', 'yes', 'positive']
+                if cls in depressed_patterns:
+                    logger.info(f"  MATCH: Class '{cls}' matches DEPRESSED patterns → DEPRESSED")
                     return 'depressed'
+                
                 # Fallback to substring matching for other variations
-                elif 'not' in cls or 'no-' in cls or cls.startswith('no '):
+                if 'not' in cls or 'no-' in cls or cls.startswith('no '):
+                    logger.info(f"  PARTIAL_MATCH: Class '{cls}' contains 'not'/'no' → NOT_DEPRESSED")
                     return 'not-depressed'
                 elif 'depress' in cls:
+                    logger.info(f"  PARTIAL_MATCH: Class '{cls}' contains 'depress' → DEPRESSED")
                     return 'depressed'
+                else:
+                    logger.warning(f"  NO_MATCH: Class '{cls}' does not match any pattern")
+            else:
+                logger.debug("  ✗ NOT_FOUND: 'class' key missing")
             
-            # Check for prediction field
+            # ============ CHECK 3: prediction.class nested field ============
             if 'prediction' in analysis:
                 pred = analysis.get('prediction', {})
+                logger.info(f"\n✓ FOUND: 'prediction' field (type: {type(pred)})")
                 if isinstance(pred, dict):
+                    logger.info(f"  Prediction keys: {list(pred.keys())}")
                     cls = str(pred.get('class', '')).lower().strip()
+                    logger.info(f"  prediction['class'] = '{cls}'")
+                    
                     if cls in ['not-depressed', 'no-depression', 'not depressed', 'no depression']:
+                        logger.info(f"  MATCH: Class '{cls}' → NOT_DEPRESSED")
                         return 'not-depressed'
                     elif cls in ['depressed', 'depression']:
+                        logger.info(f"  MATCH: Class '{cls}' → DEPRESSED")
                         return 'depressed'
                     elif 'not' in cls or 'no' in cls:
+                        logger.info(f"  PARTIAL_MATCH: Class '{cls}' contains 'not'/'no' → NOT_DEPRESSED")
                         return 'not-depressed'
                     elif 'depress' in cls:
+                        logger.info(f"  PARTIAL_MATCH: Class '{cls}' contains 'depress' → DEPRESSED")
                         return 'depressed'
+                    else:
+                        logger.warning(f"  NO_MATCH: Prediction class '{cls}' not recognized")
+                else:
+                    logger.warning(f"  ERROR: prediction is not a dict, skipping")
+            else:
+                logger.debug("  ✗ NOT_FOUND: 'prediction' key missing")
             
-            # Check for assessment field
+            # ============ CHECK 4: assessment field (some responses use this) ============
             if 'assessment' in analysis:
                 assess = str(analysis.get('assessment', '')).lower()
+                logger.info(f"\n✓ FOUND: 'assessment' = '{assess}'")
                 if assess in ['high', 'medium']:
+                    logger.info(f"  MATCH: Assessment '{assess}' → DEPRESSED")
                     return 'depressed'
                 elif assess == 'low':
+                    logger.info(f"  MATCH: Assessment '{assess}' → NOT_DEPRESSED")
                     return 'not-depressed'
+                else:
+                    logger.warning(f"  NO_MATCH: Assessment '{assess}' not in [high, medium, low]")
+            else:
+                logger.debug("  ✗ NOT_FOUND: 'assessment' key missing")
+            
+            # ============ CHECK 5: probability_depression (scores) ============
+            if 'probability_depression' in analysis:
+                prob = analysis.get('probability_depression')
+                logger.info(f"\n✓ FOUND: 'probability_depression' = {prob}")
+                try:
+                    prob_float = float(prob)
+                    threshold = 0.5
+                    if prob_float >= threshold:
+                        logger.info(f"  MATCH: Probability {prob_float} >= {threshold} → DEPRESSED")
+                        return 'depressed'
+                    else:
+                        logger.info(f"  MATCH: Probability {prob_float} < {threshold} → NOT_DEPRESSED")
+                        return 'not-depressed'
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"  ERROR: Could not convert probability to float: {e}")
+            else:
+                logger.debug("  ✗ NOT_FOUND: 'probability_depression' key missing")
+        else:
+            logger.error(f"ERROR: Analysis is not a dict (type={type(analysis)}), cannot extract classification")
         
-        logger.warning(f"Could not extract depression classification from: {analysis}")
+        # If we get here, none of the patterns matched
+        logger.warning(f"\n{'='*80}")
+        logger.warning(f"❌ UNABLE TO EXTRACT CLASSIFICATION - RETURNED 'unknown'")
+        logger.warning(f"Analysis structure did not match any expected pattern")
+        logger.warning(f"Available analysis keys: {list(analysis.keys()) if isinstance(analysis, dict) else type(analysis)}")
+        logger.warning(f"{'='*80}\n")
+        
         return 'unknown'
+        
     except Exception as e:
-        logger.error(f"Error extracting depression classification: {e}")
+        logger.error(f"\n{'='*80}")
+        logger.error(f"❌ EXCEPTION while extracting classification:")
+        logger.error(f"Error type: {type(e).__name__}")
+        logger.error(f"Error message: {str(e)}")
+        logger.error(f"Traceback:\n{traceback.format_exc()}")
+        logger.error(f"{'='*80}\n")
         return 'unknown'
 
 
