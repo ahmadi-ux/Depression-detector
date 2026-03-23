@@ -11,7 +11,7 @@ OLLAMA_URL = "http://localhost:11434"
 REQUEST_TIMEOUT_SEC = 300
 NUM_PREDICT = 2200
 TEMPERATURE = 0
-MODEL_NAME = "llama3.1"
+MODEL_NAME = "gpt-oss:20b"
 #llama3.1
 #gpt-oss:20b
 #emollama:v1
@@ -58,26 +58,21 @@ dataset_RMHD_3 = Dataset.from_pandas(RMHD_3)
 dataset_RMHD_4 = Dataset.from_pandas(RMHD_4)
 
 #13,636 samples total, 6,315 depressed (label 0) and 7,321 not-depressed
-#combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
-#split_dataset = combined_dataset.train_test_split(test_size=0.1, seed=42) #remember seed so we can pull out training data.
-#test_data = split_dataset["test"]
+combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
+split_dataset = combined_dataset.train_test_split(test_size=0.1, seed=42) #remember seed so we can pull out training data.
+test_data = split_dataset["test"]
 
-#Essay data set option!
-essay_data = pd.read_csv("data_sets/synthetic_essays.csv")
-essay_data = essay_data.rename(columns={"Label": "label"})
+#Essay data set option! 14 samples total, 8 depressed (label 0) and 6 not-depressed.
+"""essay_data = essay_data.rename(columns={"Label": "label"})
 essay_data = essay_data.rename(columns={"Text": "text"})
 essay_data = essay_data[common_columns]
 dataset_essay = Dataset.from_pandas(essay_data)
 combined_dataset = concatenate_datasets([dataset_essay])
-test_data = combined_dataset
-#split_dataset = combined_dataset.train_test_split(test_size=1.0, seed=42) #remember seed so we can pull out training data.
-#test_data = split_dataset["test"]
+test_data = combined_dataset"""
 
 
 # Print count of entries with label 0 (depressed)
 print("Count with label 0:", combined_dataset.filter(lambda x: x['label'] == 0).num_rows)
-
-
 
 
 def ollama_response_to_string(input_response):
@@ -136,12 +131,12 @@ for each in test_data:
     response = ollama_response_to_string(response)
 
     # dataset uses 'label' column (0 indicates depressed)
-    if each["label"] == 0 and response.strip() == "depressed":
+    if each["label"] == 0 and response.strip().lower() == "depressed":
         TP += 1
         total_ran += 1
         print("Successfully predicted depressed for text: " + each["text"] + "\nResponse: " + response)
     
-    elif each["label"] != 0 and response.strip() == "depressed":
+    elif each["label"] != 0 and response.strip().lower() == "depressed":
         FP += 1
         total_ran += 1
         error_result_str = (
@@ -153,12 +148,12 @@ for each in test_data:
         results_arr.append(error_result_str)
         print(error_result_str)
 
-    elif each["label"] != 0 and response.strip() == "not-depressed":
+    elif each["label"] != 0 and response.strip().lower() == "not-depressed" or response.strip().lower() == "not depressed":
         TN += 1
         total_ran += 1
         print("Successfully predicted not-depressed for text: " + each["text"] + "\nResponse: " + response)
     
-    elif each["label"] == 0 and response.strip() == "not-depressed":
+    elif each["label"] == 0 and response.strip().lower() == "not-depressed" or response.strip().lower() == "not depressed":
         FN += 1
         total_ran += 1
     
@@ -172,7 +167,7 @@ for each in test_data:
         print(error_result_str)
 
     else:
-        print("Received unexpected response: " + response.strip())
+        print("Received unexpected response: " + response.strip().lower())
         ERROR += 1
         print("Label = " + str(each["label"]))
         error_result_str = (
