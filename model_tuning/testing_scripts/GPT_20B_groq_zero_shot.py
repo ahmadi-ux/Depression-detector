@@ -12,15 +12,21 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.Common.groq_handler import analyze_with_groq
+from backend.Common.groq_handler import (
+    analyze_with_groq,
+    get_daily_token_usage,
+    get_effective_daily_budget,
+    get_effective_daily_request_budget,
+    handle_rate_limit_sleep,
+)
 from groq import RateLimitError
 
 
-DEFAULT_MODEL = "groq/compound"
+DEFAULT_MODEL = "openai/gpt-oss-20b"
 DEFAULT_PROMPT_TYPE = "ollama_compare"
+DEFAULT_DAILY_BUDGET = 200_000
 DEFAULT_RATE_LIMIT_SECONDS = 2.0
-DEFAULT_MIN_OUTPUT_TOKENS = 32
-RATE_LIMIT_SLEEP_SECONDS = 86400  # 24 hours
+DEFAULT_MIN_OUTPUT_TOKENS = 16
 
 
 def parse_test_size(value: str) -> int | float:
@@ -119,20 +125,28 @@ def extract_groq_prediction(response: dict, prompt_type: str) -> str:
 def evaluate(
     model_name: str,
     prompt_type: str,
+    daily_budget: int,
     rate_limit_seconds: float,
     min_output_tokens: int,
     test_size: int | float,
     seed: int,
     confidence_threshold: float,
     max_samples: int | None,
+    wait_on_budget_cap: bool,
+    sleep_seconds_on_cap: int,
 ):
+    effective_daily_budget = get_effective_daily_budget(model_name, daily_budget)
+    effective_daily_request_budget = get_effective_daily_request_budget(model_name)
     combined_dataset, test_data = build_test_data(test_size=test_size, seed=seed, confidence_threshold=confidence_threshold)
 
     if max_samples is not None:
         test_data = test_data.select(range(min(max_samples, len(test_data))))
 
     print("Count with label 0:", combined_dataset.filter(lambda x: x["label"] == 0).num_rows)
-    print(f"Running {len(test_data)} samples...")
+    print(f"Configured daily budget: {daily_budget} | Effective daily budget for {model_name}: {effective_daily_budget}")
+    if effective_daily_request_budget is not None:
+        print(f"Model {model_name} has {effective_daily_request_budget} requests-per-day limit (no preemptive cap applied)")
+        print(f"Requested {len(test_data)} samples - may require sleeping 24h if limit exceeded")
 
     TP = 0
     TN = 0
@@ -141,6 +155,7 @@ def evaluate(
     ERROR = 0
     total_ran = 0
     results_arr = []
+    stopped_by_budget = False
 
     for idx, each in enumerate(test_data):
         if idx > 0:
@@ -155,6 +170,8 @@ def evaluate(
                     each["text"],
                     model=model_name,
                     prompt_type=prompt_type,
+                    daily_budget_tokens=effective_daily_budget,
+                    calls_remaining=len(test_data) - idx,
                     min_output_tokens=min_output_tokens,
                 )
                 predicted = extract_groq_prediction(response, prompt_type)
@@ -170,6 +187,8 @@ def evaluate(
                             each["text"],
                             model=model_name,
                             prompt_type="sentence",
+                            daily_budget_tokens=effective_daily_budget,
+                            calls_remaining=len(test_data) - idx,
                             min_output_tokens=max(min_output_tokens, 64),
                         )
                         fallback_pred = extract_groq_prediction(fallback_response, "sentence")
@@ -181,21 +200,50 @@ def evaluate(
 
                 break
             except RateLimitError as rate_limit_err:
-                print(f"\n[Sample {idx + 1}/{len(test_data)}] Rate limit (429) hit: {rate_limit_err}")
+                print(f"\n[Sample {idx + 1}/{len(test_data)}] RateLimitError: {rate_limit_err}")
                 print(f"\n{'='*80}")
                 print(f"SLEEPING on rate limit at Sample {idx + 1}/{len(test_data)}")
                 print(f"Sample text: {each['text'][:100]}...")
-                print(f"Sleeping for {RATE_LIMIT_SLEEP_SECONDS} seconds (24 hours)...")
                 print(f"{'='*80}\n")
-                time.sleep(RATE_LIMIT_SLEEP_SECONDS)
+                handle_rate_limit_sleep(model_name)
                 # After sleep, retry the same sample
                 print(f"Retrying sample {idx + 1} after rate limit sleep...")
                 continue
             except Exception as e:
                 err = str(e)
+                is_budget_error = (
+                    "Daily token budget exhausted" in err
+                    or "Remaining token budget is insufficient" in err
+                    or "Insufficient budget for completion after prompt allocation" in err
+                )
+                if is_budget_error:
+                    if wait_on_budget_cap:
+                        print(f"\n{'='*80}")
+                        print(f"SLEEPING on budget exhaustion at Sample {idx + 1}/{len(test_data)}")
+                        print(f"Sample text: {each['text'][:100]}...")
+                        print(
+                            "Daily token budget reached. "
+                            f"Sleeping for {sleep_seconds_on_cap} seconds before retrying this same sample..."
+                        )
+                        print(f"{'='*80}\n")
+                        time.sleep(sleep_seconds_on_cap)
+                        continue
+
+                    print(f"Stopped early due to daily token budget. Details: {err}")
+                    stopped_by_budget = True
+                    break
+
+                if retry_unknown_once and not unknown_retry_used:
+                    unknown_retry_used = True
+                    print(f"Retrying sample {idx + 1} after request error: {err}")
+                    continue
+
                 print(f"Request failed on sample {idx + 1}: {err}")
                 predicted = "unknown"
                 break
+
+        if stopped_by_budget:
+            break
 
         if each["label"] == 0 and predicted == "depressed":
             TP += 1
@@ -253,6 +301,7 @@ def evaluate(
     denom_f1 = percision + recall
     f1_score = 2 * (percision * recall) / denom_f1 if denom_f1 > 0 else 0.0
 
+    usage = get_daily_token_usage(effective_daily_budget)
     results_arr.insert(
         0,
         "TP: " + str(TP)
@@ -265,7 +314,11 @@ def evaluate(
         + " Accuracy: " + str(accuracy)
         + " F1 Score: " + str(f1_score)
         + " Model: " + model_name
-        + " Prompt: " + prompt_type,
+        + " Prompt: " + prompt_type
+        + " DailyBudget: " + str(daily_budget)
+        + " EffectiveDailyBudget: " + str(effective_daily_budget)
+        + " EstimatedUsed: " + str(usage["estimated_used"])
+        + " EstimatedRemaining: " + str(usage["estimated_remaining"]),
     )
 
     safe_model_name = make_safe_filename(model_name)
@@ -288,29 +341,39 @@ def evaluate(
     print("TN:" + str(TN))
     print("FN:" + str(FN))
     print("ERROR:" + str(ERROR))
+    print(f"Token usage (estimated): used={usage['estimated_used']} remaining={usage['estimated_remaining']} budget={usage['budget']}")
+
+    if stopped_by_budget:
+        print("Run ended early due to token budget cap.")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Simple Groq zero-shot runner without token budget management")
+    parser = argparse.ArgumentParser(description="Groq zero-shot runner with Ollama-style output formatting")
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL)
     parser.add_argument("--prompt", type=str, default=DEFAULT_PROMPT_TYPE)
+    parser.add_argument("--daily-budget", type=int, default=DEFAULT_DAILY_BUDGET)
     parser.add_argument("--rate-limit-seconds", type=float, default=DEFAULT_RATE_LIMIT_SECONDS)
     parser.add_argument("--min-output-tokens", type=int, default=DEFAULT_MIN_OUTPUT_TOKENS)
     parser.add_argument("--test-size", type=parse_test_size, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--confidence-threshold", type=float, default=0.80)
     parser.add_argument("--max-samples", type=int, default=None)
+    parser.add_argument("--wait-on-budget-cap", action="store_true")
+    parser.add_argument("--sleep-seconds-on-cap", type=int, default=86400)
     args = parser.parse_args()
 
     evaluate(
         model_name=args.model,
         prompt_type=args.prompt,
+        daily_budget=args.daily_budget,
         rate_limit_seconds=args.rate_limit_seconds,
         min_output_tokens=args.min_output_tokens,
         test_size=args.test_size,
         seed=args.seed,
         confidence_threshold=args.confidence_threshold,
         max_samples=args.max_samples,
+        wait_on_budget_cap=args.wait_on_budget_cap,
+        sleep_seconds_on_cap=args.sleep_seconds_on_cap,
     )
 
 

@@ -301,10 +301,15 @@ def clean_json_response(raw_response: str) -> dict:
     """
     Clean and parse JSON response from LLM.
     Handles cases where LLM wraps JSON in markdown code blocks.
+    Handles XML thinking tags (like <think>...</think>).
     Extracts the first balanced JSON object/array.
     """
     import re
     raw = raw_response.strip()
+    
+    # Remove XML thinking tags (e.g., <think>...</think>)
+    raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL | re.IGNORECASE)
+    raw = raw.strip()
     
     # Remove markdown code blocks if present
     if raw.startswith("```"):

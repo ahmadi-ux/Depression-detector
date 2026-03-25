@@ -22,9 +22,9 @@ from backend.Common.groq_handler import (
 from groq import RateLimitError
 
 
-DEFAULT_MODEL = "openai/gpt-oss-20b"
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
 DEFAULT_PROMPT_TYPE = "ollama_compare"
-DEFAULT_DAILY_BUDGET = 200_000
+DEFAULT_DAILY_BUDGET = 100_000
 DEFAULT_RATE_LIMIT_SECONDS = 2.0
 DEFAULT_MIN_OUTPUT_TOKENS = 16
 
@@ -201,6 +201,10 @@ def evaluate(
                 break
             except RateLimitError as rate_limit_err:
                 print(f"\n[Sample {idx + 1}/{len(test_data)}] RateLimitError: {rate_limit_err}")
+                print(f"\n{'='*80}")
+                print(f"SLEEPING on rate limit at Sample {idx + 1}/{len(test_data)}")
+                print(f"Sample text: {each['text'][:100]}...")
+                print(f"{'='*80}\n")
                 handle_rate_limit_sleep(model_name)
                 # After sleep, retry the same sample
                 print(f"Retrying sample {idx + 1} after rate limit sleep...")
@@ -214,10 +218,14 @@ def evaluate(
                 )
                 if is_budget_error:
                     if wait_on_budget_cap:
+                        print(f"\n{'='*80}")
+                        print(f"SLEEPING on budget exhaustion at Sample {idx + 1}/{len(test_data)}")
+                        print(f"Sample text: {each['text'][:100]}...")
                         print(
                             "Daily token budget reached. "
                             f"Sleeping for {sleep_seconds_on_cap} seconds before retrying this same sample..."
                         )
+                        print(f"{'='*80}\n")
                         time.sleep(sleep_seconds_on_cap)
                         continue
 

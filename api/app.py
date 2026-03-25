@@ -55,7 +55,7 @@ def upload():
     logger.info(f"LLM: {llm}, Prompt Type: {prompt_type}")
     
     # Define available LLMs
-    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig"]
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok"]
     
     # Validate LLM
     if llm not in AVAILABLE_LLMS:
@@ -216,14 +216,15 @@ def get_job(job_id):
 @app.route("/", methods=["GET"])
 def home():
     """API info endpoint"""
-    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig"]
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok"]
     return jsonify({
         "message": "Depression Detector API", 
         "status": "running",
         "endpoints": {
             "upload": "/api/upload",
             "job_status": "/api/job/<job_id>",
-            "test_gemini": "/api/test/gemini"
+            "test_gemini": "/api/test/gemini",
+            "test_grok": "/api/test/grok"
         },
         "supported_inputs": ["files", "text"],
         "supported_llms": AVAILABLE_LLMS,

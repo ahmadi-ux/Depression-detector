@@ -21,7 +21,8 @@ LLM_INTERFACES = {
     "kimi": "backend.Interfaces.Kimi2",
     "qwen": "backend.Interfaces.Qwen",
     "compound": "backend.Interfaces.Compound",
-    "llamabig": "backend.Interfaces.LlamaBig"
+    "llamabig": "backend.Interfaces.LlamaBig",
+    "grok": "backend.Interfaces.Grok"
 }
 
 # Display names for PDF reports
@@ -32,7 +33,8 @@ LLM_DISPLAY_NAMES = {
     "kimi": "Kimi2",
     "qwen": "Qwen",
     "compound": "Compound",
-    "llamabig": "LlamaBig"
+    "llamabig": "LlamaBig",
+    "grok": "Grok"
 }
 
 
@@ -41,7 +43,7 @@ def get_llm_interface(llm_type: str):
     Dynamically import and return the analyze_text function for the specified LLM.
     
     Args:
-        llm_type: One of 'llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound', 'llamabig'
+        llm_type: One of 'llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound', 'llamabig', 'grok'
         
     Returns:
         The analyze_text function from the LLM's interface module
@@ -69,7 +71,7 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
     Universal job runner for any supported LLM.
     
     Args:
-        llm_type: The LLM to use ('llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound', 'llamabig')
+        llm_type: The LLM to use ('llama', 'gemini', 'chatgpt', 'kimi', 'qwen', 'compound', 'llamabig', 'grok')
         file_payloads: List of file payload dictionaries with 'bytes' and 'filename'
         prompt_type: The prompt template type to use (default: 'simple')
         
@@ -102,7 +104,8 @@ def run_llm_job(llm_type: str, file_payloads, prompt_type: str = "simple"):
                 "kimi": "moonshotai/kimi-k2-instruct-0905",
                 "qwen": "qwen-qwq-32b",
                 "compound": "compound-beta",
-                "llamabig": "llama-3.3-70b-versatile"
+                "llamabig": "llama-3.3-70b-versatile",
+                "grok": "grok-1"
             }
             model = model_map.get(llm_type, "llama-3.1-8b-instant")
             llm_output = analyze_sentences(extracted_text, model, prompt_type)

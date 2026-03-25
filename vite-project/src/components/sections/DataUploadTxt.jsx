@@ -78,6 +78,9 @@ export default function DataUploadTxt({ onShowResult }) {
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("LlamaBig")}>
                       Llama Big
                   </DropdownMenuItem>
+                  {/*<DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Grok")}>
+                      Grok
+                  </DropdownMenuItem>*/}
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Prompt Selection Dropdown */}
