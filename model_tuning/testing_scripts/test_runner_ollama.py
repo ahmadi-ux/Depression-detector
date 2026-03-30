@@ -5,21 +5,22 @@ import json
 import pandas as pd
 from datasets import concatenate_datasets
 from datasets import Dataset
-import os
 
 OLLAMA_URL = "http://localhost:11434"
 # Presets for Ollama call
 REQUEST_TIMEOUT_SEC = 300
 NUM_PREDICT = 2200
 TEMPERATURE = 0
-MODEL_NAME = "llama3.1:8b"
+MODEL_NAME = "gpt-oss:20b"
 #llama3.1
-
-
+#gpt-oss:20b
+#emollama:v1
 
 #uniform mapping
 # labels = label, 0 is depressed, all others are not-depressed
 # text = text
+
+# Load your CSV
 emoDep = pd.read_json('data_sets/combined.json', lines=True)
 emoDep = emoDep.rename(columns={"label_id": "label"}) #change column name to label
 emoDep['label'] = 0 # Change all values in the 'label_id' column to 0 (depressed)
@@ -43,7 +44,6 @@ RMHD_2['label'] = 0
 RMHD_3['label'] = 0
 RMHD_4['label'] = 0
 
-
 #combine datasets by shared columns (text and label)
 common_columns = ["text", "label"]
 emoDep = emoDep[common_columns]
@@ -59,13 +59,20 @@ dataset_RMHD_4 = Dataset.from_pandas(RMHD_4)
 
 #13,636 samples total, 6,315 depressed (label 0) and 7,321 not-depressed
 combined_dataset = concatenate_datasets([dataset_csv1, dataset_depEmo, dataset_RMHD_1, dataset_RMHD_2, dataset_RMHD_3, dataset_RMHD_4])
-split_dataset = combined_dataset.train_test_split(test_size=3, seed=42) #remember seed so we can pull out training data.
+split_dataset = combined_dataset.train_test_split(test_size=0.1, seed=42) #remember seed so we can pull out training data.
 test_data = split_dataset["test"]
+
+#Essay data set option! 14 samples total, 8 depressed (label 0) and 6 not-depressed.
+"""essay_data = essay_data.rename(columns={"Label": "label"})
+essay_data = essay_data.rename(columns={"Text": "text"})
+essay_data = essay_data[common_columns]
+dataset_essay = Dataset.from_pandas(essay_data)
+combined_dataset = concatenate_datasets([dataset_essay])
+test_data = combined_dataset"""
+
 
 # Print count of entries with label 0 (depressed)
 print("Count with label 0:", combined_dataset.filter(lambda x: x['label'] == 0).num_rows)
-
-
 
 
 def ollama_response_to_string(input_response):
@@ -124,45 +131,45 @@ for each in test_data:
     response = ollama_response_to_string(response)
 
     # dataset uses 'label' column (0 indicates depressed)
-    if each["label"] == 0 and response.strip() == "depressed":
+    if each["label"] == 0 and response.strip().lower() == "depressed":
         TP += 1
         total_ran += 1
         print("Successfully predicted depressed for text: " + each["text"] + "\nResponse: " + response)
     
-    elif each["label"] != 0 and response.strip() == "depressed":
+    elif each["label"] != 0 and response.strip().lower() == "depressed":
         FP += 1
         total_ran += 1
         error_result_str = (
-        "FP : "
-        f"Label: {each['label']} | "
-        f"Predicted: {response.strip()} | "
-        f"Text: {each['text']} | "
+            "FP : "
+            f"Label: {each['label']} | "
+            f"Predicted: {response.strip()} | "
+            f"Text: {each['text']} | "
         )  
         results_arr.append(error_result_str)
         print(error_result_str)
 
-    elif each["label"] != 0 and response.strip() == "not-depressed":
+    elif each["label"] != 0 and response.strip().lower() == "not-depressed" or response.strip().lower() == "not depressed":
         TN += 1
         total_ran += 1
         print("Successfully predicted not-depressed for text: " + each["text"] + "\nResponse: " + response)
     
-    elif each["label"] == 0 and response.strip() == "not-depressed":
+    elif each["label"] == 0 and response.strip().lower() == "not-depressed" or response.strip().lower() == "not depressed":
         FN += 1
         total_ran += 1
     
         error_result_str = (
-        "FN : "
-        f"Label: {each['label']} | "
-        f"Predicted: {response.strip()} | "
-        f"Text: {each['text']} | "
+            "FN : "
+            f"Label: {each['label']} | "
+            f"Predicted: {response.strip()} | "
+            f"Text: {each['text']} | "
         )  
         results_arr.append(error_result_str)
         print(error_result_str)
+
     else:
-        print("Received unexpected response: " + response.strip())
+        print("Received unexpected response: " + response.strip().lower())
         ERROR += 1
         print("Label = " + str(each["label"]))
-        print ("Total ran: " + str(total_ran) + "/" + str(len(test_data)))
         error_result_str = (
             "ERROR : "
             f"Label: {each['label']} | "
@@ -170,35 +177,25 @@ for each in test_data:
             f"Text: {each['text']} | "
         )
         results_arr.append(error_result_str)
-
-
+    print ("Total ran: " + str(total_ran) + "/" + str(len(test_data)))
+    
 # ERROR is safety suicide hotline response from LLM so calculated as TP
-percision = (TP + ERROR) / ((TP + ERROR) + FP)
-recall = (TP + ERROR) / ((TP + ERROR) + FN)
-accuracy = (TP + ERROR + TN) / (TP + TN + FP + FN + ERROR)
+# Change how error is handled for other models/test sets.
+percision = (TP) / ((TP) + FP)
+recall = (TP) / ((TP) + FN)
+accuracy = (TP + TN) / (TP + TN + FP + FN)
 f1_score = 2 * (percision * recall) / (percision + recall)
 
 
 results_arr.insert(0, "TP: " + str(TP) + " FP: " + str(FP) + " TN: " + str(TN) + " FN: " + str(FN) + " ERROR: " + str(ERROR)
                    + " Precision: " + str(percision) + " Recall: " + str(recall) + " Accuracy: " + str(accuracy) + " F1 Score: " + str(f1_score) + " Model: " + MODEL_NAME)
 
-
-def make_safe_filename(value):
-    # For when model name has invalid naming char
-    invalid_chars = '<>:"/\\|?*'
-    safe = "".join("_" if c in invalid_chars else c for c in value)
-    return safe.strip(" .")
-
 # Generate a datetime string for the filename
-safe_model_name = make_safe_filename(MODEL_NAME)
-dt_str = datetime.now().strftime(f"{safe_model_name}_%m%d_%H%M%S")
-results_folder = "results"
-results_path = os.path.join(results_folder, f"{dt_str}.txt")
-os.makedirs(results_folder, exist_ok=True)
-with open(results_path, "w", encoding="utf-8") as f:
+dt_str = datetime.now().strftime(f"model_{MODEL_NAME.replace(':', '_')}_%m%d_%H%M%S")
+results_filename = f"results_{dt_str}.txt"
+with open(results_filename, "w", encoding="utf-8") as f:
     for line in results_arr:
         f.write(line + "\n")
-print(f"Saved results to: {results_path}")
 
 
 print(f"Precision: {percision:.4f}")
