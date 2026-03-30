@@ -235,6 +235,20 @@ Respond with exactly 'depressed' or 'not-depressed'.
 TEXT:
 {text}
 
+LABEL:""",
+    
+    "emotion_multilabel": """Classify whether the following text indicates depression.
+If depression is detected, indicate which of these emotions are present:
+emotion_list = ['anger', 'brain dysfunction (forget)', 'emptiness', 'hopelessness', 'loneliness', 'sadness', 'suicide intent', 'worthlessness']
+Respond with ONLY a binary string that cooralates to which emotions are present.
+OUTPUT EXAMPLES:
+['emptiness', 'hopelessness'] -> 00110000
+['anger'] -> 10000000
+['anger', 'brain dysfunction (forget)', 'emptiness', 'hopelessness', 'loneliness', 'sadness', 'suicide intent', 'worthlessness'] -> 11111111
+
+TEXT:
+{text}
+
 LABEL:"""
 }
 

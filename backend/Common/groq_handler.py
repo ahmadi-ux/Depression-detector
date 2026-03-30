@@ -471,45 +471,19 @@ def analyze_with_groq(
     """
     global _daily_tokens_used
 
-    _maybe_reset_daily_usage()
-    budget = get_effective_daily_budget(model, daily_budget_tokens)
-
-    remaining_daily_tokens = budget - _daily_tokens_used
-    if remaining_daily_tokens <= 256:
-        raise ValueError(
-            f"Daily token budget exhausted. Remaining: {max(0, remaining_daily_tokens)}"
-        )
-
-    # Simple budget split across remaining calls
-    calls_remaining = max(1, int(calls_remaining))
-    call_budget = max(256, remaining_daily_tokens // calls_remaining)
-    call_budget = min(call_budget, MAX_TOTAL_TOKENS)
-    call_budget = min(call_budget, remaining_daily_tokens)
-
-    # For label-only prompts (ollama_compare), we only need ~20 output tokens
-    # For other prompts, we need more breathing room
-    if prompt_type == "ollama_compare":
-        min_output_needed = 32  # Just enough for "depressed" or "not-depressed"
-    else:
-        min_output_needed = 256
+    # Simplified: no token budget constraints, just use reasonable limits
+    # Truncate text to ~3000 tokens (~12000 characters) to avoid excessive input
+    max_text_length = 12000
+    truncated_text = text[:max_text_length]
+    if len(text) > max_text_length:
+        logger.info(f"Text truncated from ~{len(text)} to ~{max_text_length} characters")
     
-    # Allocate output tokens, but ensure we have room for input
-    max_output_tokens = min(min_output_needed, max(32, call_budget // 3))
-    max_input_tokens = call_budget - max_output_tokens
-
-    prompt_template_tokens = estimate_tokens(get_prompt(prompt_type, ""))
-    max_text_tokens = max(32, max_input_tokens - prompt_template_tokens)
-    
-    truncated_text = truncate_to_token_limit(text, max_text_tokens)
+    # Prepare prompt and allow model to run free on output
     prompt = get_prompt(prompt_type, truncated_text)
-    prompt_tokens = estimate_tokens(prompt)
-
-    # Final adjustment: ensure we have at least 32 output tokens
-    available_output = call_budget - prompt_tokens
-    max_output_tokens = max(32, min(MAX_OUTPUT_TOKENS, available_output))
+    max_output_tokens = 2048  # Generous max to allow complete responses
     
     logger.debug(f"Analyzing with model: {model}, prompt_type: {prompt_type}")
-    logger.debug(f"Call budget: {call_budget}, max output: {max_output_tokens}")
+    logger.debug(f"Max output tokens: {max_output_tokens}")
     
     raw_response = ""
     last_finish_reason = None
@@ -609,6 +583,23 @@ def analyze_with_groq(
             normalized = response_lower
         
         data = {"class": normalized, "raw_response": raw_response}
+    elif prompt_type == "emotion_multilabel":
+        # emotion_multilabel returns an 8-bit binary string like "00110000"
+        binary_str = raw_response.strip()
+        # Extract 8-bit substring if response contains extra text
+        if not (len(binary_str) == 8 and all(c in "01" for c in binary_str)):
+            # Look for 8-character substring of only 0s and 1s
+            cleaned = binary_str.replace(" ", "")
+            found = False
+            for i in range(len(cleaned) - 7):
+                candidate = cleaned[i:i+8]
+                if all(c in "01" for c in candidate):
+                    binary_str = candidate
+                    found = True
+                    break
+            if not found:
+                logger.warning(f"Could not extract 8-bit string from response: {raw_response!r}")
+        data = {"bits": binary_str, "raw_response": raw_response}
     else:
         try:
             data = clean_json_response(raw_response)
@@ -617,28 +608,12 @@ def analyze_with_groq(
             logger.error(f"Raw response was: {repr(raw_response)}")
             raise ValueError(f"Invalid JSON from LLM: {e}")
 
-    completion_tokens = min(max_output_tokens, estimate_tokens(raw_response))
-    estimated_total_tokens = prompt_tokens + completion_tokens
-    _daily_tokens_used += estimated_total_tokens
-
-    usage = get_daily_token_usage(daily_budget_tokens=budget)
-    logger.info(
-        f"Estimated token usage this call: {estimated_total_tokens} "
-        f"(prompt={prompt_tokens}, completion={completion_tokens}). "
-        f"Daily remaining: {usage['estimated_remaining']}/{usage['budget']}"
-    )
+    # No longer tracking token usage against daily budget
+    logger.info(f"Response generated successfully (length: {len(raw_response)} chars)")
     
     return {
         "analysis": data,
         "prompt_type": prompt_type,
-        "token_usage": {
-            "estimated_prompt_tokens": prompt_tokens,
-            "estimated_completion_tokens": completion_tokens,
-            "estimated_total_tokens": estimated_total_tokens,
-            "estimated_daily_used": usage["estimated_used"],
-            "estimated_daily_remaining": usage["estimated_remaining"],
-            "daily_budget": usage["budget"],
-        },
     }
 
 
