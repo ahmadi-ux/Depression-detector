@@ -2,7 +2,7 @@
 
 A comprehensive AI-powered system for detecting depression indicators in student writings using multiple Large Language Models (LLMs). This application combines advanced natural language processing with a modern React web interface.
 
-**For complete documentation, see [README_COMPLETE.md](README_COMPLETE.md)**
+**For complete documentation, see [README_COMPLETE.md](README_IN_DEPTH.md)**
 
 ---
 
