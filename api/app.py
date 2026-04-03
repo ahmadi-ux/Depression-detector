@@ -5,9 +5,13 @@ import io
 import json
 import logging
 import os
+import sys
 from uuid import uuid4
 import threading
 from datetime import datetime
+
+# Add parent directory to path so we can import backend module
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load environment variables from backend/Common/.env
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'backend', 'Common', '.env'))
@@ -23,8 +27,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Expose Content-Disposition header for downloads
-CORS(app, expose_headers=["Content-Disposition"])
+# Expose Content-Disposition and classification headers for downloads
+CORS(app, expose_headers=["Content-Disposition", "X-Depression-Classification"])
 
 jobs = {}  # In-memory job store (use Redis/DB in prod)
 
@@ -51,7 +55,7 @@ def upload():
     logger.info(f"LLM: {llm}, Prompt Type: {prompt_type}")
     
     # Define available LLMs
-    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig"]
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok"]
     
     # Validate LLM
     if llm not in AVAILABLE_LLMS:
@@ -132,11 +136,14 @@ def process_job(job_id, llm, prompt_type, file_payloads):
         jobs[job_id]["progress"] = 10
         
         logger.info(f"[{job_id}] Calling unified LLM engine: {llm}")
-        # Call the unified engine with the selected LLM type
-        pdf_bytes = run_llm_job(llm, file_payloads, prompt_type)
+        # Call the unified engine - now returns (pdf_bytes, classification)
+        pdf_bytes, classification = run_llm_job(llm, file_payloads, prompt_type)
         logger.info(f"[{job_id}] LLM handler completed. PDF size: {len(pdf_bytes)} bytes")
+        logger.info(f"[{job_id}] Classification: {classification}")
+        
         # Store result
         jobs[job_id]["pdf"] = pdf_bytes
+        jobs[job_id]["classification"] = classification
         jobs[job_id]["status"] = "complete"
         jobs[job_id]["completed_at"] = datetime.now().isoformat()
         jobs[job_id]["progress"] = 100
@@ -147,9 +154,16 @@ def process_job(job_id, llm, prompt_type, file_payloads):
         logger.error(f"[{job_id}] ❌ Job failed with error:")
         logger.error(f"{type(e).__name__}: {str(e)}", exc_info=True)
         
+        # Compose better error message with context
+        error_msg = str(e)
+        if "empty response" in error_msg.lower():
+            error_msg = f"{error_msg} - Try retrying or using a different LLM model. This often indicates API quota limits or content safety filters."
+        elif "not valid json" in error_msg.lower():
+            error_msg = f"{error_msg} - The {llm} model returned a malformed response. Try retrying with a different prompt type like 'structured' or 'simple'."
+        
         # Handle errors
         jobs[job_id]["status"] = "error"
-        jobs[job_id]["error"] = str(e)
+        jobs[job_id]["error"] = error_msg
         jobs[job_id]["failed_at"] = datetime.now().isoformat()
         
         logger.error(f"{'='*80}\n")
@@ -172,12 +186,18 @@ def get_job(job_id):
         llm = job.get("llm", "LLM")
         jobid8 = job_id[:8]
         download_name = f"{base_name}_{llm}_{jobid8}.pdf"
-        return send_file(
+        
+        # Create response with PDF
+        response = send_file(
             io.BytesIO(job["pdf"]),
             mimetype="application/pdf",
             as_attachment=True,
             download_name=download_name
         )
+        # Add classification to response headers
+        classification = job.get("classification", "unknown")
+        response.headers["X-Depression-Classification"] = classification
+        return response
     elif job["status"] == "error":
         # Return error details
         return jsonify({"status": "error", "error": job["error"]}), 400
@@ -196,17 +216,44 @@ def get_job(job_id):
 @app.route("/", methods=["GET"])
 def home():
     """API info endpoint"""
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok"]
     return jsonify({
         "message": "Depression Detector API", 
         "status": "running",
         "endpoints": {
             "upload": "/api/upload",
-            "job_status": "/api/job/<job_id>"
+            "job_status": "/api/job/<job_id>",
+            "test_gemini": "/api/test/gemini",
+            "test_grok": "/api/test/grok"
         },
         "supported_inputs": ["files", "text"],
-        "supported_llms": list(LLM_HANDLERS.keys()),
+        "supported_llms": AVAILABLE_LLMS,
         "supported_prompts": get_available_prompts()
     })
+
+
+@app.route("/api/test/gemini", methods=["GET"])
+def test_gemini_connection():
+    """
+    Test Gemini API connection and return diagnostic information.
+    Useful for debugging API quota, key, or network issues.
+    """
+    logger.info("Testing Gemini API connection...")
+    try:
+        from backend.Interfaces.Gemini import test_gemini_connection
+        result = test_gemini_connection()
+        return jsonify(result)
+    except ImportError:
+        return jsonify({
+            "error": "Could not import Gemini interface",
+            "status": "❌ Import failed"
+        }), 500
+    except Exception as e:
+        logger.error(f"Test endpoint error: {e}")
+        return jsonify({
+            "error": str(e),
+            "status": "❌ Test failed"
+        }), 500
 
 
 if __name__ == "__main__":

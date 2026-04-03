@@ -21,13 +21,14 @@ const PROMPT_OPTIONS = [
   { value: "chain_of_thought", label: "Chain-of-Thought (Reasoning)" },
   { value: "few_shot", label: "Few-Shot (Example Based)" },
   { value: "free_form", label: "Free-Form (Narrative)" },
-  { value: "sentence", label: "Sentence-by-Sentence" }
+  { value: "sentence", label: "Sentence-by-Sentence" },
+  { value: "ollama_compare", label: "Ollama Compare (Zero-Shot)" }
 ];
 
 /** Data Upload Section with dialog form for uploading Text
  * - Dialog with a contact form when button is clicked
 */
-export default function DataUploadTxt() {
+export default function DataUploadTxt({ onShowResult }) {
   const [open, setOpen] = useState(false);
   const [selectedLLM, setSelectedLLM] = useState("Gemini");
   const [selectedPrompt, setSelectedPrompt] = useState("simple");
@@ -77,6 +78,9 @@ export default function DataUploadTxt() {
                   <DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("LlamaBig")}>
                       Llama Big
                   </DropdownMenuItem>
+                  {/*<DropdownMenuItem className={dropdownMenuStyle} onClick={() => setSelectedLLM("Grok")}>
+                      Grok
+                  </DropdownMenuItem>*/}
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Prompt Selection Dropdown */}
@@ -110,10 +114,16 @@ export default function DataUploadTxt() {
                 <li><strong>Few-Shot:</strong> Example-based assessment</li>
                 <li><strong>Free-Form:</strong> Clinical narrative analysis</li>
                 <li><strong>Sentence-by-Sentence:</strong> Splits text into sentences and analyzes each </li>
+                <li><strong>Ollama-Compare:</strong> Simple prompt used for zero-shot comparison</li>
               </ul>
             </div>
             
-            <ContactFormTxt onSuccess={() => setOpen(false)} llm={selectedLLM} prompt={selectedPrompt} />
+            <ContactFormTxt 
+              onSuccess={() => setOpen(false)} 
+              llm={selectedLLM} 
+              prompt={selectedPrompt}
+              onShowResult={onShowResult}
+            />
           </DialogContent>
         </Dialog>
       </div>
