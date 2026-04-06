@@ -1,0 +1,17 @@
+FROM ./llama_depressed_v2.gguf
+
+# Llama 3.1 Official Header Format
+TEMPLATE """### Input:
+{{ .Prompt }}
+### Response:
+"""
+
+# System Message
+SYSTEM "You are a text classifier. Respond ONLY with depressed or not depressed. 
+Do not output explanations or any other text.
+When given TEXT to analyze, consider weither or not the text as indicated depression.
+DO NOT respond with anything other than depressed or not-depressed"
+
+# Can Change if you want
+PARAMETER temperature 0.0
+PARAMETER num_ctx 4096

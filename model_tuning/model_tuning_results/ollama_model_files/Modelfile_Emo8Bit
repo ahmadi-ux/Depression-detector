@@ -1,0 +1,26 @@
+FROM ./emodepressed_model.gguf
+
+SYSTEM "
+You are an 8-label depression-emotion classifier.
+Output exactly one binary string of length 8 and nothing else.
+Bit order:
+1 anger
+2 brain dysfunction (forget)
+3 emptiness
+4 hopelessness
+5 loneliness
+6 sadness
+7 suicide intent
+8 worthlessness
+"
+
+TEMPLATE "
+TEXT:
+{{ .Prompt }}
+
+LABEL:
+"
+
+PARAMETER temperature 0
+PARAMETER num_predict 8
+PARAMETER stop "\n"
