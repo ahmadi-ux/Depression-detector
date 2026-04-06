@@ -1,15 +1,71 @@
-## Common
+# Common Utilities
 
-This Common folder holds code/files that are utilized in multiple places throughout the project allowing for more readanle code so that new users or contributers can quickly understand what they must actually add to get the desired outcome.  
+Shared helpers for text processing, API calls, and result formatting.
 
-## prompts.py
+---
 
-This file is where the different prompt options are held and called throughout the project to interact with the LLMs this makes for easy editing and less total lines as they are all in one place only. 
+## 🚀 Quick Usage
 
-## engineUtils.py 
+### Extract Text
+```python
+from backend.Common.engineUtils import extract_text_from_file
+text = extract_text_from_file(file_object)  # PDF, DOCX, TXT
+```
 
-This file is where most of the work is done on both the uploaded data and the output pdfs.  We first extract the text from the uploaded data and format it into a universal format.  We than parse over the LLM output to format it into a pdf output based on the type of prompt chosen and the number of files uploaded. That is where most of the meat is from since each prompt provides different parameters to look for, so each prompt needs to have different formatting of their ouputs.
+### Get Prompt
+```python
+from backend.Common.prompts import get_prompt
+prompt = get_prompt("simple")  # or "structured", "chain_of_thought", etc.
+```
 
-## groq_handler.py
+### Analyze Sentences
+```python
+from backend.Common.sentence_analyzer import analyze_sentences
+results = analyze_sentences("Your text here", "gemini")
+```
 
-This file is where the Groq interfaces are doing their work such as extracting data from files after engineUtils formats it such as different rows, columns, and also mapping different parts to each other and also formatting the API output so that its consistent. It also analyzes the token amount because as we are developing this we are using a free api key. The largest section of this file is to parse over csv files as they need more formatting.
+---
+
+## 📋 Prompt Types
+
+- `simple` - Binary yes/no
+- `structured` - Checklist analysis
+- `feature_extraction` - Linguistic patterns
+- `chain_of_thought` - Step-by-step reasoning
+- `few_shot` - Example-based
+- `free_form` - Detailed narrative
+- `sentence` - Line-by-line
+- `ollama_compare` - Multi-model comparison
+
+---
+
+## ⚙️ Setup
+
+Create `backend/Common/.env`:
+```env
+GROQ_API_KEY=gsk_...
+GOOGLE_API_KEY=...
+OPENAI_API_KEY=sk_...
+```
+
+---
+
+## 🔧 Main Functions
+
+| Function | What It Does |
+|----------|-------------|
+| `extract_text_from_file(file)` | PDF/DOCX/TXT → text |
+| `get_prompt(type)` | Get prompt template |
+| `analyze_sentences(text, llm)` | Analyze by sentence |
+
+---
+
+## 🐛 Issues
+
+**API key error?** → Check `.env` exists and has correct key  
+**Module not found?** → Run from project root  
+**File not supported?** → Use PDF, DOCX, or TXT only  
+
+---
+
+**Used by:** All LLM interfaces | Called from: `unified_engine.py`
