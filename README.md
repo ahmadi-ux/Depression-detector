@@ -12,9 +12,9 @@ A comprehensive AI-powered system for detecting depression indicators in student
 > *"Can Large Language Models predict self-reported depression and what specific language patterns can be used to identify depression among students in educational contexts?"*
 
 ### Key Capabilities
-- **Multi-Model Support**: Compare 8+ different LLMs (Gemini, GPT, Llama, Qwen, Kimi, Grok)
+- **Multi-Model Support**: Compare 5 different LLMs (Gemini, GPT, Llama)
 - **Flexible Analysis**: 8 different prompting strategies
-- **Real-time Processing**: Instant feedback on submitted texts
+- **Real-time Processing**: Instant feedback on submitted texts within token limits
 - **Research-Grade**: Zero-shot and fine-tuned model evaluation
 - **User-Friendly**: Modern web interface with responsive design
 
@@ -29,7 +29,7 @@ Flask API Server
       ↓
 Unified LLM Engine
       ↓
-Multiple LLM Providers (Groq, Google, OpenAI, Alibaba, Moonshot, X.AI)
+Multiple LLM Providers (Groq, Google, OpenAI)
 ```
 
 ---
@@ -49,7 +49,7 @@ Depression among college students is critical:
 ### Prerequisites
 - Node.js 18.0.0+ and npm 9.0.0+
 - Python 3.9+
-- API key from Groq, Google Gemini, or OpenAI
+- API key from Groq and Google Gemini
 
 ### 1. Clone & Navigate
 ```bash
@@ -127,15 +127,12 @@ Depression-detector/
 **Backend:**
 - Python 3.9+
 - Flask 2.3.3
-- Groq, Google, OpenAI APIs
+- Groq and Google APIs
 
 **LLM Models:**
 - Llama 3.1 & 3.3 (Groq)
-- GPT-4 & GPT-4 Turbo (OpenAI)
+- GPT-4 & GPT-4 Turbo (Groq)
 - Gemini 1.5 (Google)
-- Qwen 2 (Alibaba)
-- Kimi K2 (Moonshot)
-- Grok (X.AI)
 - Compound (Groq)
 
 ---
@@ -270,7 +267,6 @@ docker run -p 5000:5000 -e GROQ_API_KEY=$GROQ_API_KEY depression-detector
 - Llama 3.1 (8B & 70B)
 - GPT-4 / Turbo
 - Gemini 1.5
-- Qwen 2, Kimi K2, Grok
 - Compound models
 
 ### Metrics
@@ -286,12 +282,6 @@ docker run -p 5000:5000 -e GROQ_API_KEY=$GROQ_API_KEY depression-detector
 - **Frontend Help**: [vite-project/README.md](vite-project/README.md#troubleshooting)
 - **Backend Help**: See component-specific documentation
 - **Issues**: Check troubleshooting sections above
-
----
-
-## 📄 License
-
-Part of the Depression Detector research initiative. See institution policies for academic usage.
 
 ---
 
