@@ -36,7 +36,7 @@ export default function ContactForm({ onSuccess, llm, prompt, onShowResult }) {
       console.log(`Processing ${files.length} file(s) with ${prompt} prompt...`);
 
       const formData = new FormData();
-      formData.append("llm", llm);
+      formData.append("llm", llm.toLowerCase());
       formData.append("prompt", prompt);  // Add prompt type
       files.forEach((file) => {
         formData.append("files", file);
@@ -63,7 +63,7 @@ export default function ContactForm({ onSuccess, llm, prompt, onShowResult }) {
       // Poll for job completion
       let isComplete = false;
       let pollCount = 0;
-      const maxPolls = 600; // 10 minutes max
+      const maxPolls = 3600; // 60 minutes max (1 poll per second)
 
       while (!isComplete && pollCount < maxPolls) {
         // Wait 1 second before polling
@@ -141,7 +141,7 @@ export default function ContactForm({ onSuccess, llm, prompt, onShowResult }) {
       }
 
       if (!isComplete) {
-        throw new Error('Processing timeout - took longer than 10 minutes');
+        throw new Error('Processing timeout - took longer than 60 minutes');
       }
 
       form.reset({ file: null });

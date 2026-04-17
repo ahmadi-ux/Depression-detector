@@ -55,7 +55,7 @@ def upload():
     logger.info(f"LLM: {llm}, Prompt Type: {prompt_type}")
     
     # Define available LLMs
-    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok"]
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok", 'ollama']
     
     # Validate LLM
     if llm not in AVAILABLE_LLMS:
@@ -216,7 +216,7 @@ def get_job(job_id):
 @app.route("/", methods=["GET"])
 def home():
     """API info endpoint"""
-    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok"]
+    AVAILABLE_LLMS = ["gemini", "llama", "chatgpt", "kimi", "qwen", "compound", "llamabig", "grok", "ollama"]
     return jsonify({
         "message": "Depression Detector API", 
         "status": "running",
@@ -256,5 +256,91 @@ def test_gemini_connection():
         }), 500
 
 
+@app.route("/api/ollama/test", methods=["GET"])
+def test_ollama():
+    """
+    Test Ollama connection
+    """
+    logger.info("Testing Ollama connection...")
+    try:
+        from backend.Interfaces.Ollama import check_ollama_connection, OLLAMA_MODEL
+        is_running = check_ollama_connection()
+        return jsonify({
+            "status": "✅ Connected" if is_running else "❌ Not running",
+            "running": is_running,
+            "model": OLLAMA_MODEL,
+            "url": "http://localhost:11434",
+            "instruction": "Start Ollama with: ollama serve" if not is_running else "Ollama is ready"
+        })
+    except Exception as e:
+        logger.error(f"Ollama test error: {e}")
+        return jsonify({
+            "error": str(e),
+            "status": "❌ Test failed"
+        }), 500
+
+
+@app.route("/api/ollama/models", methods=["GET"])
+def ollama_models():
+    """
+    Get list of available Ollama models
+    """
+    try:
+        from backend.Interfaces.Ollama import get_available_models
+        result = get_available_models()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error fetching Ollama models: {e}")
+        return jsonify({
+            "error": str(e),
+            "models": []
+        }), 500
+
+
+@app.route("/api/ollama/config", methods=["POST"])
+def configure_ollama():
+    """
+    Configure Ollama model, URL, and timeout
+    
+    POST body:
+    {
+        "model": "mistral",           # Optional: model name
+        "url": "http://localhost:11434",  # Optional: Ollama server URL
+        "timeout": 60000                # Optional: request timeout in seconds
+    }
+    """
+    try:
+        data = request.get_json()
+        from backend.Interfaces.Ollama import set_ollama_model, set_ollama_url, set_ollama_timeout
+        
+        if "model" in data:
+            set_ollama_model(data["model"])
+            
+        if "url" in data:
+            set_ollama_url(data["url"])
+            
+        if "timeout" in data:
+            set_ollama_timeout(data["timeout"])
+        
+        return jsonify({
+            "status": "✅ Configured",
+            "message": "Ollama configuration updated"
+        })
+    except Exception as e:
+        logger.error(f"Error configuring Ollama: {e}")
+        return jsonify({
+            "error": str(e),
+            "status": "❌ Configuration failed"
+        }), 500
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # Import and verify Ollama timeout
+    from backend.Interfaces.Ollama import OLLAMA_TIMEOUT
+    logger.info(f"\n{'='*80}")
+    logger.info(f"OLLAMA_TIMEOUT is set to: {OLLAMA_TIMEOUT} seconds ({OLLAMA_TIMEOUT/60:.1f} minutes)")
+    logger.info(f"{'='*80}\n")
+    
+    # For production, use Gunicorn (no timeout): gunicorn -b 127.0.0.1:5000 --timeout 0 api.app:app
+    # For development, this will use Werkzeug
+    app.run(debug=True, port=5000, threaded=True)
