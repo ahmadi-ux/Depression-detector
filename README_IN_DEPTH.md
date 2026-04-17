@@ -39,7 +39,7 @@ A comprehensive AI-powered system for detecting depression indicators in student
 
 ### Key Capabilities
 
-- **Multi-Model Analysis**: Compare depression detection across 8+ different LLMs
+- **Multi-Model Analysis**: Compare depression detection across 5 different LLMs
 - **Flexible Prompting**: 8 different analysis strategies for comprehensive evaluation
 - **Real-time Processing**: Instant feedback on submitted texts or files
 - **Research-Grade Evaluation**: Zero-shot and fine-tuned model comparison
@@ -126,10 +126,9 @@ Depression among college students has reached critical levels:
 │              LLM Interfaces & External Services                     │
 │  ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐     │
 │  │  Llama (Groq)    │ │  Gemini (Google) │ │  ChatGPT (OpenAI)│     │
-│  │  LlamaBig (Groq) │ │  Qwen (Alibaba)  │ │  Grok (X.AI)     │     │
-│  │  Compound (Groq) │ │  Kimi (Moonshot) │ │  Custom Models   │     │
+│  │  LlamaBig (Groq) │ │  Compound (Groq) │ │  Custom Models   │     │
 │  └──────────────────┘ └──────────────────┘ └──────────────────┘     │
-│  [Via: Groq API]   [Via: Google Cloud]  [Via: Various APIs]         │
+│  [Via: Groq API]      [Via: Google Cloud]                           │
 └─────────────────────────────────────────────────────────────────────┘
 
 Additional Components:
@@ -174,11 +173,8 @@ Additional Components:
 | Provider | Models | API | Integration |
 |----------|--------|-----|-------------|
 | **Groq** | Llama 3.1, Compound, LlamaBig, Llama 3.3-70B | REST API | Direct integration |
-| **Google** | Gemini 1.5, Gemini 2.0 | google-genai | Native Python SDK |
+| **Google** | Gemini 1.5 | google-genai | Native Python SDK |
 | **OpenAI** | GPT-4, GPT-4 Turbo | REST API | openai Python SDK |
-| **Alibaba** | Qwen | REST API | Direct integration |
-| **Moonshot** | Kimi K2 | REST API | Direct integration |
-| **X.AI** | Grok | REST API | Direct integration |
 | **Local** | Ollama (Llama2, etc.) | REST API | Local inference |
 
 ### Development & Testing
@@ -236,8 +232,6 @@ Depression-detector/
 │       ├── ChatGPT.py                     # ChatGPT interface
 │       ├── Gemini.py                      # Gemini interface
 │       ├── Grok.py                        # Grok interface
-│       ├── Qwen.py                        # Qwen interface
-│       ├── Kimi2.py                       # Kimi interface
 │       ├── LlamaBig.py                    # LlamaBig interface
 │       ├── Compound.py                    # Compound model interface
 │       └── README.md                      # Interface documentation
@@ -333,7 +327,7 @@ You'll need API keys for at least one LLM provider:
 
 #### 1. Clone & Navigate
 ```bash
-cd c:\Users\sgtjd\.AVisualStudioProjects\BlueNucleus\Depression-detector
+cd c:\Depression-detector
 ```
 
 #### 2. Backend Setup
@@ -347,7 +341,6 @@ cd backend/Common
 # Create .env file with:
 # GROQ_API_KEY=your_key_here
 # GOOGLE_API_KEY=your_key_here
-# OPENAI_API_KEY=your_key_here
 
 # Test backend import
 python -c "from backend.unified_engine import run_llm_job; print('✓ Backend loaded')"
@@ -497,9 +490,6 @@ Download results as PDF report
 | Compound | `Compound.py` | Groq | Multi-model combination |
 | ChatGPT | `ChatGPT.py` | OpenAI | GPT-4, GPT-4 Turbo |
 | Gemini | `Gemini.py` | Google | Gemini 1.5, 2.0 |
-| Qwen | `Qwen.py` | Alibaba | QwQ-32B, Qwen2 |
-| Kimi | `Kimi2.py` | Moonshot | Context window: 200K |
-| Grok | `Grok.py` | X.AI | XAI's reasoning model |
 
 **Adding a New Model:**
 
@@ -565,10 +555,6 @@ python model_tuning/testing_scripts/GPT_20B_groq_emotion_multilabel.py \
 # LLM API Keys
 GROQ_API_KEY=gsk_your_key_here
 GOOGLE_API_KEY=your_google_key
-OPENAI_API_KEY=sk_your_openai_key
-KIMI_API_KEY=your_kimi_key
-QWEN_API_KEY=your_qwen_key
-GROK_API_KEY=your_grok_key
 
 # Logging
 LOG_LEVEL=INFO
