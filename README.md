@@ -124,7 +124,7 @@ Depression-detector/
 ├── api/                       # Flask API server
 ├── model_tuning/              # ML pipeline & evaluation
 ├── requirements.txt           # Python dependencies
-└── README_COMPLETE.md         # Comprehensive documentation
+└── README_IN_DEPTH.md         # Comprehensive documentation
 ```
 
 ### Key Components
@@ -192,7 +192,7 @@ OPENAI_API_KEY=your_openai_key
 
 ## 📚 Documentation
 
-- **Complete Guide**: [README_COMPLETE.md](README_COMPLETE.md) - Full system documentation
+- **Complete Guide**: [README_IN_DEPTH.md](README_IN_DEPTH.md) - Full system documentation
 - **Frontend**: [vite-project/README.md](vite-project/README.md) - React/Vite details
 - **Backend**: [backend/Interfaces/README.md](backend/Interfaces/README.md) - LLM interfaces
 - **Model Tuning**: [model_tuning/README.txt](model_tuning/README.txt) - ML pipeline
@@ -222,7 +222,7 @@ taskkill /PID <PID> /F
 - Check `.env.dev` has correct `VITE_API_URL`
 - Check browser console (F12) for CORS errors
 
-**For more troubleshooting:** See [README_COMPLETE.md#troubleshooting](README_COMPLETE.md#troubleshooting)
+**For more troubleshooting:** See [README_IN_DEPTH.md#troubleshooting](README_IN_DEPTH.md#troubleshooting)
 
 ---
 
@@ -263,7 +263,7 @@ docker build -t depression-detector .
 docker run -p 5000:5000 -e GROQ_API_KEY=$GROQ_API_KEY depression-detector
 ```
 
-**Full deployment guide:** See [README_COMPLETE.md#deployment](README_COMPLETE.md#deployment)
+**Full deployment guide:** See [README_IN_DEPTH.md#deployment](README_IN_DEPTH.md#deployment)
 
 ---
 
@@ -300,7 +300,7 @@ docker run -p 5000:5000 -e GROQ_API_KEY=$GROQ_API_KEY depression-detector
 
 ## 📧 Support & Questions
 
-- **Complete Documentation**: [README_COMPLETE.md](README_COMPLETE.md)
+- **Complete Documentation**: [README_IN_DEPTH.md](README_IN_DEPTH.md)
 - **Frontend Help**: [vite-project/README.md](vite-project/README.md#troubleshooting)
 - **Backend Help**: See component-specific documentation
 - **Issues**: Check troubleshooting sections above
@@ -311,7 +311,7 @@ docker run -p 5000:5000 -e GROQ_API_KEY=$GROQ_API_KEY depression-detector
 
 | Link | Purpose |
 |------|---------|
-| [Complete Documentation](README_COMPLETE.md) | Full system guide |
+| [Complete Documentation](README_IN_DEPTH.md) | Full system guide |
 | [Frontend](vite-project/) | React application |
 | [Backend](backend/) | Processing engine |
 | [API](api/app.py) | REST endpoints |
@@ -323,6 +323,6 @@ docker run -p 5000:5000 -e GROQ_API_KEY=$GROQ_API_KEY depression-detector
 
 **Next Steps:**
 1. Follow [Quick Start](#quick-start) above
-2. Read [README_COMPLETE.md](README_COMPLETE.md) for comprehensive guide
+2. Read [README_IN_DEPTH.md](README_IN_DEPTH.md) for comprehensive guide
 3. Check component-specific documentation for details
 4. Run example analysis to verify setup

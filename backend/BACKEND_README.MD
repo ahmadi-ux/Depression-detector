@@ -2,8 +2,6 @@
 
 The backend orchestrates LLM analysis, handles text processing, and manages model interfaces.
 
-> **Quick Tip:** To start all services (Ollama, API, and Frontend) at once, run `.\start-all.ps1` from the project root.
-
 ---
 
 ## 📁 Backend Structure

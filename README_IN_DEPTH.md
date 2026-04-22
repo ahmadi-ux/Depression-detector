@@ -251,11 +251,19 @@ Depression-detector/
 │       ├── GPT_20B_groq_emotion_multilabel.py
 │       └── [other testing scripts]
 │
+├── start-all.ps1                          # Startup script (Windows PowerShell)
+├── requirements.txt                       # Python dependencies
+├── README.md                              # Overview & quick start
+├── README_IN_DEPTH.md                     # Complete documentation
+└── vercel.json                            # Deployment configuration
+│
 ├── package.json                           # Root npm config
 ├── requirements.txt                       # Python dependencies
 ├── vercel.json                            # Vercel deployment config
-├── README.md                              # This file (root documentation)
-└── README_COMPLETE.md                     # Complete system documentation
+├── start-all.ps1                          # Windows startup script
+├── README.md                              # Quick start guide
+├── README_IN_DEPTH.md                     # Complete documentation
+└── INTERNSHIP_REPORT.md                   # Internship summary report
 
 **Key Directories:**
 - `api/`: Flask server handles requests
