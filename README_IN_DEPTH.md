@@ -9,29 +9,36 @@ A comprehensive AI-powered system for detecting depression indicators in student
 
 ## 📋 Table of Contents
 
-- [Project Overview](#project-overview)
-- [Research Objectives](#research-objectives)
-- [System Architecture](#system-architecture)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-  - [Automated Setup (start-all.ps1)](#automated-setup-start-allps1)
+- [Project Overview](#-project-overview)
+- [Research Objectives](#-research-objectives)
+- [System Architecture](#EF%B8%8F-system-architecture)
+- [Technology Stack](#%EF%B8%8F-technology-stack)
+- [Project Structure](#-project-structure)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start)
+  - [Automated Setup (start-all.ps1)](#automated-setup-start-allps1---recommended)
   - [Manual Setup](#manual-setup)
-    - [Installation](#installation)
-    - [Configuration](#configuration)
-    - [Running the Full Stack](#running-the-full-stack)
-- [Component Documentation](#component-documentation)
+    - [Installation](#1-installation)
+    - [Configuration](#2-configuration)
+    - [Running the Full Stack](#3-running-the-full-stack)
+  - [Backend Only (API Testing)](#backend-only-api-testing)
+  - [Frontend Only (Local Development)](#frontend-only-local-development)
+- [Component Documentation](#-component-documentation)
   - [Frontend (Vite)](#frontend-vite)
   - [Backend (Flask API)](#backend-flask-api)
   - [LLM Interfaces](#llm-interfaces)
   - [Model Tuning & Evaluation](#model-tuning--evaluation)
-- [Configuration](#configuration)
-- [API Reference](#api-reference)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [Research Context](#research-context)
+- [Configuration](#%EF%B8%8F-configuration)
+- [API Reference](#-api-reference)
+- [Deployment](#-deployment)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [Research Context](#-research-context)
+- [Additional Resources](#-additional-resources)
+- [License](#-license)
+- [Support](#-support)
+- [Citation](#-citation)
+- [Quick Reference Links](#-quick-reference-links)
 
 ---
 
@@ -251,11 +258,19 @@ Depression-detector/
 │       ├── GPT_20B_groq_emotion_multilabel.py
 │       └── [other testing scripts]
 │
+├── start-all.ps1                          # Startup script (Windows PowerShell)
+├── requirements.txt                       # Python dependencies
+├── README.md                              # Overview & quick start
+├── README_IN_DEPTH.md                     # Complete documentation
+└── vercel.json                            # Deployment configuration
+│
 ├── package.json                           # Root npm config
 ├── requirements.txt                       # Python dependencies
 ├── vercel.json                            # Vercel deployment config
-├── README.md                              # This file (root documentation)
-└── README_COMPLETE.md                     # Complete system documentation
+├── start-all.ps1                          # Windows startup script
+├── README.md                              # Quick start guide
+├── README_IN_DEPTH.md                     # Complete documentation
+└── INTERNSHIP_REPORT.md                   # Internship summary report
 
 **Key Directories:**
 - `api/`: Flask server handles requests
@@ -997,9 +1012,9 @@ If you use this research in your work, please cite:
 ```bibtex
 @software{depression_detector_2026,
   title="Depression Detector: LLM-Based Analysis of Student Depression Indicators",
-  author="[Your Name/Organization]",
+  author="[Blue Nucleus GVSU]",
   year=2026,
-  url="https://github.com/[repo-url]",
+  url="https://github.com/ahmadi-ux/Depression-detector/tree/main",
   note="Depression detection using Large Language Models"
 }
 ```
@@ -1009,7 +1024,7 @@ If you use this research in your work, please cite:
 **Last Updated**: April 2026  
 **Version**: 1.0.0  
 **Status**: Production Ready  
-**Maintainer**: [Your Name/Organization]
+**Maintainer**: [Blue Nucleus GVSU]
 
 ---
 
