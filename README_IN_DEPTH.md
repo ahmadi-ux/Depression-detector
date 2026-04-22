@@ -9,18 +9,20 @@ A comprehensive AI-powered system for detecting depression indicators in student
 
 ## 📋 Table of Contents
 
-- [Project Overview](#project-overview)
-- [Research Objectives](#research-objectives)
-- [System Architecture](#system-architecture)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-  - [Automated Setup (start-all.ps1)](#automated-setup-start-allps1)
+- [Project Overview](#-project-overview)
+- [Research Objectives](#-research-objectives)
+- [System Architecture](#-system-architecture)
+- [Technology Stack](#-technology-stack)
+- [Project Structure](#-project-structure)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start)
+  - [Automated Setup (start-all.ps1)](#automated-setup-start-allps1---recommended)
   - [Manual Setup](#manual-setup)
-    - [Installation](#installation)
-    - [Configuration](#configuration)
-    - [Running the Full Stack](#running-the-full-stack)
+    - [Installation](#1-installation)
+    - [Configuration](#2-configuration)
+    - [Running the Full Stack](#3-running-the-full-stack)
+  - [Backend Only (API Testing)](#backend-only-api-testing)
+  - [Frontend Only (Local Development)](#frontend-only-local-development)
 - [Component Documentation](#component-documentation)
   - [Frontend (Vite)](#frontend-vite)
   - [Backend (Flask API)](#backend-flask-api)
@@ -32,6 +34,11 @@ A comprehensive AI-powered system for detecting depression indicators in student
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Research Context](#research-context)
+- [Additional Resources](#additional-resources)
+- [License](#license)
+- [Support](#support)
+- [Citation](#citation)
+- [Quick Reference Links](#quick-reference-links)
 
 ---
 
