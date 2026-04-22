@@ -11,8 +11,8 @@ A comprehensive AI-powered system for detecting depression indicators in student
 
 - [Project Overview](#-project-overview)
 - [Research Objectives](#-research-objectives)
-- [System Architecture](#-system-architecture)
-- [Technology Stack](#-technology-stack)
+- [System Architecture](#EF%B8%8F-system-architecture)
+- [Technology Stack](#%EF%B8%8F-technology-stack)
 - [Project Structure](#-project-structure)
 - [Prerequisites](#-prerequisites)
 - [Quick Start](#-quick-start)
@@ -23,22 +23,22 @@ A comprehensive AI-powered system for detecting depression indicators in student
     - [Running the Full Stack](#3-running-the-full-stack)
   - [Backend Only (API Testing)](#backend-only-api-testing)
   - [Frontend Only (Local Development)](#frontend-only-local-development)
-- [Component Documentation](#component-documentation)
+- [Component Documentation](#-component-documentation)
   - [Frontend (Vite)](#frontend-vite)
   - [Backend (Flask API)](#backend-flask-api)
   - [LLM Interfaces](#llm-interfaces)
   - [Model Tuning & Evaluation](#model-tuning--evaluation)
-- [Configuration](#configuration)
-- [API Reference](#api-reference)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [Research Context](#research-context)
-- [Additional Resources](#additional-resources)
-- [License](#license)
-- [Support](#support)
-- [Citation](#citation)
-- [Quick Reference Links](#quick-reference-links)
+- [Configuration](#%EF%B8%8F-configuration)
+- [API Reference](#-api-reference)
+- [Deployment](#-deployment)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [Research Context](#-research-context)
+- [Additional Resources](#-additional-resources)
+- [License](#-license)
+- [Support](#-support)
+- [Citation](#-citation)
+- [Quick Reference Links](#-quick-reference-links)
 
 ---
 
@@ -1012,9 +1012,9 @@ If you use this research in your work, please cite:
 ```bibtex
 @software{depression_detector_2026,
   title="Depression Detector: LLM-Based Analysis of Student Depression Indicators",
-  author="[Your Name/Organization]",
+  author="[Blue Nucleus GVSU]",
   year=2026,
-  url="https://github.com/[repo-url]",
+  url="https://github.com/ahmadi-ux/Depression-detector/tree/main",
   note="Depression detection using Large Language Models"
 }
 ```
@@ -1024,7 +1024,7 @@ If you use this research in your work, please cite:
 **Last Updated**: April 2026  
 **Version**: 1.0.0  
 **Status**: Production Ready  
-**Maintainer**: [Your Name/Organization]
+**Maintainer**: [Blue Nucleus GVSU]
 
 ---
 
