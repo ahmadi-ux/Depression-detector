@@ -2,6 +2,8 @@
 
 The REST API layer handles HTTP requests from the frontend and coordinates with the backend LLM engine to process depression detection analysis requests.
 
+> **Quick Tip:** To start all services (Ollama, API, and Frontend) at once, run `.\start-all.ps1` from the project root.
+
 ---
 
 ## 📁 API Structure
@@ -17,7 +19,7 @@ api/
 
 ## 🚀 Quick Start
 
-### Start the API Server
+### Start the API Server (Manual)
 
 ```bash
 cd Depression-detector
@@ -25,6 +27,18 @@ python api/app.py
 ```
 
 **Server runs on:** `http://localhost:5000`
+
+### Or Start All Services at Once (Windows)
+
+```powershell
+cd Depression-detector
+.\start-all.ps1
+```
+
+This starts:
+- Ollama (http://localhost:11434)
+- API (http://localhost:5000)
+- Frontend (http://localhost:5173)
 
 ### Test the API
 

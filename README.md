@@ -47,49 +47,71 @@ Depression among college students is critical:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18.0.0+ and npm 9.0.0+
-- Python 3.9+
-- API key from Groq and Google Gemini
+- **Node.js** 18.0.0+ and npm 9.0.0+
+- **Python** 3.9+
+- **Ollama** (with Llama models downloaded)
+- **API Keys**: Groq and Google Gemini
 
-### 1. Clone & Navigate
+### 1. Installation & Setup
+
+#### Install Dependencies
 ```bash
 cd Depression-detector
-```
 
 ### 2. Backend Setup
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure API keys
-cd backend/Common
-# Create .env file with GROQ_API_KEY, GOOGLE_API_KEY, etc.
-cd ../..
-```
-
-### 3. Frontend Setup
-```bash
+# Frontend dependencies
 cd vite-project
 npm install
 cd ..
 ```
 
-### 4. Run the System
-
-**Terminal 1 - Start Backend:**
+#### Configure API Keys
 ```bash
-python api/app.py
-# Server: http://localhost:5000
+# Create .env file in backend/Common/
+cd backend/Common
+# Add your API keys:
+# GROQ_API_KEY=your_key
+# GOOGLE_API_KEY=your_key
+cd ../..
 ```
 
-**Terminal 2 - Start Frontend:**
+### 2. Run Everything at Once (Recommended)
+
+**Windows PowerShell:**
+```powershell
+.\start-all.ps1
+```
+
+This automatically starts all three services:
+- ✅ Ollama → http://localhost:11434
+- ✅ API → http://localhost:5000  
+- ✅ Frontend → http://localhost:5173
+
+Then visit: **`http://localhost:5173`** in your browser
+
+### 3. Or Run Manually
+
+**Terminal 1 - Ollama:**
+```bash
+ollama serve
+```
+
+**Terminal 2 - Backend:**
+```bash
+python api/app.py
+```
+
+**Terminal 3 - Frontend:**
 ```bash
 cd vite-project
 npm run dev
-# App: http://localhost:5173
 ```
 
-Visit `http://localhost:5173` in your browser.
+Then visit `http://localhost:5173` in your browser.
 
 ---
 

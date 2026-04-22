@@ -16,9 +16,11 @@ A comprehensive AI-powered system for detecting depression indicators in student
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
-  - [Backend Setup](#backend-setup)
-  - [Frontend Setup](#frontend-setup)
-  - [Running the Full Stack](#running-the-full-stack)
+  - [Automated Setup (start-all.ps1)](#automated-setup-start-allps1)
+  - [Manual Setup](#manual-setup)
+    - [Installation](#installation)
+    - [Configuration](#configuration)
+    - [Running the Full Stack](#running-the-full-stack)
 - [Component Documentation](#component-documentation)
   - [Frontend (Vite)](#frontend-vite)
   - [Backend (Flask API)](#backend-flask-api)
@@ -293,6 +295,16 @@ Verify:
 python --version  # >= 3.9
 ```
 
+#### Ollama (for Local LLM Inference)
+- **Ollama** ([Download](https://ollama.ai/))
+- Required for using local Llama models
+- Lightweight inference engine (~600MB)
+
+Verify:
+```bash
+ollama --version
+```
+
 #### API Keys Required
 
 You'll need API keys for at least one LLM provider:
@@ -323,61 +335,90 @@ You'll need API keys for at least one LLM provider:
 
 ## 🚀 Quick Start
 
-### Option 1: Complete Setup (Recommended)
+### Automated Setup (start-all.ps1) - Recommended
 
-#### 1. Clone & Navigate
-```bash
-cd c:\Depression-detector
+**For Windows users, use the automated startup script:**
+
+```powershell
+# Navigate to project root
+cd Depression-detector
+
+# Run the startup script
+.\start-all.ps1
 ```
 
-#### 2. Backend Setup
+The script automatically:
+1. ✅ Starts Ollama server (local LLM inference engine)
+2. ✅ Starts Flask API server (backend processing)
+3. ✅ Starts Vite frontend development server
+4. ✅ Opens new terminal windows for each service
+5. ✅ Displays all service URLs
 
+**Services Running At:**
+- Ollama: http://localhost:11434
+- API: http://localhost:5000
+- Frontend: **http://localhost:5173** ← Use this to access the app
+
+---
+
+### Manual Setup
+
+#### 1. Installation
+
+**Clone & Install Dependencies:**
 ```bash
-# Install Python dependencies
+cd Depression-detector
+
+# Backend dependencies
 pip install -r requirements.txt
 
-# Create environment file for API keys
-cd backend/Common
-# Create .env file with:
-# GROQ_API_KEY=your_key_here
-# GOOGLE_API_KEY=your_key_here
-
-# Test backend import
-python -c "from backend.unified_engine import run_llm_job; print('✓ Backend loaded')"
-```
-
-#### 3. Frontend Setup
-
-```bash
-# Install frontend dependencies
+# Frontend dependencies
 cd vite-project
 npm install
-
-# Verify frontend setup
-npm run lint
+cd ..
 ```
 
-#### 4. Run Both Services
+#### 2. Configuration
 
-**Terminal 1 - Start Backend API:**
+**Set API Keys:**
 ```bash
-cd api
-python app.py
+cd backend/Common
+
+# Create .env file
+# Add your API keys:
+# GROQ_API_KEY=your_groq_api_key_here
+# GOOGLE_API_KEY=your_google_api_key_here
+# OPENAI_API_KEY=your_openai_api_key_here
+
+cd ../..
+```
+
+#### 3. Running the Full Stack
+
+**Terminal 1 - Start Ollama:**
+```bash
+ollama serve
+# Output: Listening on 127.0.0.1:11434
+```
+
+**Terminal 2 - Start Backend:**
+```bash
+python api/app.py
 # Server runs on http://localhost:5000
 ```
 
-**Terminal 2 - Start Frontend:**
+**Terminal 3 - Start Frontend:**
 ```bash
 cd vite-project
 npm run dev
 # Frontend runs on http://localhost:5173
 ```
 
-Visit `http://localhost:5173` in your browser.
+Then visit: **`http://localhost:5173`** in your browser
 
 ---
 
-### Option 2: Backend Only (API Testing)
+### Backend Only (API Testing)
 
 ```bash
 # Install dependencies
@@ -393,7 +434,7 @@ print(result)
 
 ---
 
-### Option 3: Frontend Only (Local Development)
+### Frontend Only (Local Development)
 
 ```bash
 cd vite-project
