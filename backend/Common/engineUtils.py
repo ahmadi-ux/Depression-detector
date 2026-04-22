@@ -106,6 +106,10 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
             logger.info("⚠ Detected wrapped analysis structure, unwrapping...")
             actual_analysis = analysis["analysis"]
             logger.debug(f"Unwrapped analysis:\n{json.dumps(actual_analysis, indent=2, default=str)}")
+        elif isinstance(analysis, dict) and "response" in analysis and isinstance(analysis.get("response"), dict):
+            logger.info("⚠ Detected 'response' wrapper (Ollama fallback), unwrapping...")
+            actual_analysis = analysis["response"]
+            logger.debug(f"Unwrapped response:\n{json.dumps(actual_analysis, indent=2, default=str)}")
         else:
             actual_analysis = analysis
 
@@ -172,6 +176,54 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
                 label = label.replace('-', ' ').title()
             confidence = 0.5  # Default confidence for simple classifier
             logger.info(f"✓ Found 'ollama_compare' (class + raw_response) structure: {label}")
+        elif 'depression_score' in actual_analysis:
+            # Ollama format (direct response)
+            score = actual_analysis.get('depression_score', 0)
+            try:
+                score_float = float(score)
+                label = 'Depression' if score_float >= 50 else 'No Depression'
+                confidence = score_float / 100.0  # Convert 0-100 to 0-1
+                logger.info(f"✓ Found 'ollama' (depression_score) structure: {label} (score={score_float})")
+            except (ValueError, TypeError):
+                label = 'UNKNOWN'
+                confidence = 0.0
+                logger.warning(f"⚠ Could not parse depression_score: {score}")
+        elif 'emotional_valence' in actual_analysis or 'hopelessness_indicators' in actual_analysis:
+            # Ollama structured format (snake_case)
+            emotional_valence = str(actual_analysis.get('emotional_valence', 'neutral')).lower()
+            hopelessness = str(actual_analysis.get('hopelessness_indicators', 'low')).lower()
+            self_worth = str(actual_analysis.get('self_worth_concerns', 'low')).lower()
+            
+            # Determine depression classification
+            if 'high' in hopelessness or 'high' in self_worth or 'negative' in emotional_valence:
+                label = 'Depression'
+                confidence = 0.75
+            elif 'medium' in hopelessness or 'medium' in self_worth:
+                label = 'Depression'
+                confidence = 0.6
+            else:
+                label = 'No Depression'
+                confidence = 0.5
+            
+            logger.info(f"✓ Found 'ollama structured' format: {label} (valence={emotional_valence}, hopelessness={hopelessness})")
+        elif 'Emotional Valence' in actual_analysis or 'Hopelessness Indicators' in actual_analysis:
+            # Ollama structured format (Title Case - older format)
+            emotional_valence = str(actual_analysis.get('Emotional Valence', 'neutral')).lower()
+            hopelessness = str(actual_analysis.get('Hopelessness Indicators', 'low')).lower()
+            self_worth = str(actual_analysis.get('Self-worth Concerns', 'low')).lower()
+            
+            # Determine depression classification
+            if 'high' in hopelessness or 'high' in self_worth or 'negative' in emotional_valence:
+                label = 'Depression'
+                confidence = 0.75
+            elif 'medium' in hopelessness or 'medium' in self_worth:
+                label = 'Depression'
+                confidence = 0.6
+            else:
+                label = 'No Depression'
+                confidence = 0.5
+            
+            logger.info(f"✓ Found 'ollama structured' format: {label} (valence={emotional_valence}, hopelessness={hopelessness})")
         else:
             logger.warning(f"⚠ Unknown response structure. Keys: {actual_analysis.keys()}")
 
@@ -187,6 +239,38 @@ def generate_combined_pdf_report(results, title_suffix="Analysis"):
             for signal, value in signals.items():
                 elements.append(Paragraph(f"- {signal}: {value:.2f}", styles['Normal']))
             logger.info(f"Found signals: {list(signals.keys())}")
+        
+        # Extract key_signals if available (Ollama format)
+        if key_signals := actual_analysis.get("key_signals"):
+            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Paragraph("Key Signals Detected:", styles['Heading3']))
+            if isinstance(key_signals, list):
+                for signal in key_signals:
+                    elements.append(Paragraph(f"• {signal}", styles['Normal']))
+            logger.info(f"Found key_signals: {len(key_signals)} items")
+        
+        # Extract summary if available (Ollama format)
+        if summary := actual_analysis.get("summary"):
+            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Paragraph("Analysis Summary:", styles['Heading3']))
+            elements.append(Paragraph(str(summary), styles['Normal']))
+            logger.info(f"Found summary: {len(str(summary))} characters")
+        
+        # Extract structured analysis (Ollama structured prompt)
+        structured_keys = ['emotional_valence', 'hopelessness_indicators', 'self_worth_concerns', 
+                          'anhedonia', 'anhedonia_loss_of_interest', 'fatigue_energy_level_mentions',
+                          'Emotional Valence', 'Hopelessness Indicators', 'Self-worth Concerns', 
+                          'Anhedonia (loss of interest)', 'Fatigue/energy level mentions']
+        found_structured = {k: actual_analysis.get(k) for k in structured_keys if k in actual_analysis}
+        
+        if found_structured:
+            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Paragraph("Structured Analysis:", styles['Heading3']))
+            for key, value in found_structured.items():
+                # Clean up the key name for display
+                display_key = key.replace('_', ' ').title()
+                elements.append(Paragraph(f"<b>{display_key}:</b> {value}", styles['Normal']))
+            logger.info(f"Found structured analysis with {len(found_structured)} fields")
 
         # Extract explanations if available
         if explanations := actual_analysis.get("explanations"):

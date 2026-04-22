@@ -87,6 +87,8 @@ git --version
 
 ## 🚀 Installation & Setup
 
+> **Quick Tip:** To start all services (Ollama, API, and Frontend) at once from the project root, run: `.\start-all.ps1`
+
 ### 1. Clone the Repository
 ```bash
 cd c:\Users\sgtjd\.AVisualStudioProjects\BlueNucleus\Depression-detector
@@ -119,9 +121,19 @@ Update `.env.prod` with your production API URL:
 VITE_API_URL=https://your-production-api.com
 ```
 
-### 4. Verify Setup
+### 4. Start Development Server
+
+**Option A: Start Frontend Only (Requires backend running separately)**
 ```bash
 npm run dev
+# Frontend: http://localhost:5173
+```
+
+**Option B: Start All Services at Once (Windows)**
+```bash
+# From the project root directory
+cd ..
+.\start-all.ps1
 ```
 
 The application should now be accessible at `http://localhost:5173` in your browser.
